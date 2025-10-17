@@ -1,17 +1,88 @@
 /**
- * Módulo: Gestión Académica
- * Estudiante encargado del microservicio de Gestión Académica
+ * Página: AcademicPage
+ * Página principal del módulo de Gestión Académica
  */
 
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { AcademicList } from "../components/AcademicList";
+import type { Academic } from "../models/academic.model";
+
 export function AcademicPage() {
-  return (
-    <div className="max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">Gestión Académica</h1>
-      <div className="bg-white rounded-lg shadow p-6">
-        <p className="text-gray-600">
-          Contenedor para el módulo de Gestión Académica. Aquí se desarrollará la funcionalidad del microservicio.
-        </p>
-      </div>
-    </div>
-  )
+     const navigate = useNavigate();
+     const [items, setItems] = useState<Academic[]>([]);
+     const [loading, setLoading] = useState(true);
+
+     useEffect(() => {
+          const fetchItems = async () => {
+               try {
+                    // Datos de ejemplo
+                    setItems([
+                         {
+                              id: "1",
+                              name: "Plan Curricular 2024",
+                              description:
+                                   "Plan curricular actualizado para el año académico 2024",
+                              status: "active",
+                              createdAt: new Date().toISOString(),
+                              updatedAt: new Date().toISOString(),
+                         },
+                         {
+                              id: "2",
+                              name: "Programa de Matemáticas",
+                              description:
+                                   "Contenido programático de matemáticas",
+                              status: "active",
+                              createdAt: new Date().toISOString(),
+                              updatedAt: new Date().toISOString(),
+                         },
+                    ]);
+               } catch (error) {
+                    console.error("Error al cargar datos:", error);
+               } finally {
+                    setLoading(false);
+               }
+          };
+
+          fetchItems();
+     }, []);
+
+     const handleDelete = async (id: string) => {
+          try {
+               setItems(items.filter((item) => item.id !== id));
+          } catch (error) {
+               console.error("Error al eliminar:", error);
+          }
+     };
+
+     if (loading) {
+          return (
+               <div className="flex justify-center items-center h-64">
+                    <div className="text-gray-600">Cargando...</div>
+               </div>
+          );
+     }
+
+     return (
+          <div className="max-w-7xl mx-auto">
+               <div className="mb-6 flex justify-between items-center">
+                    <div>
+                         <h1 className="text-3xl font-bold text-gray-900">
+                              Gestión Académica
+                         </h1>
+                         <p className="mt-2 text-sm text-gray-600">
+                              Gestión de programas académicos y currículum
+                         </p>
+                    </div>
+                    <button
+                         onClick={() => navigate("/gestion-academica/nuevo")}
+                         className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+                    >
+                         Nuevo Registro
+                    </button>
+               </div>
+
+               <AcademicList items={items} onDelete={handleDelete} />
+          </div>
+     );
 }
