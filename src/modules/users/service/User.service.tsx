@@ -3,47 +3,108 @@
  * Maneja las peticiones al API para Usuarios
  */
 
-import type { User, CreateUserDto, UpdateUserDto } from '../models/users.model'
+import type { User, CreateUserDto, UpdateUserDto, ApiResponse, UserFilters, UserStatus } from '../models/users.model'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8082/api'
 
 export const usersService = {
   async getAll(): Promise<User[]> {
-    const response = await fetch(`${API_URL}/usuarios`)
-    if (!response.ok) throw new Error('Error al obtener datos')
-    return response.json()
+    const response = await fetch(`${API_URL}/users`);
+    if (!response.ok) throw new Error("Error al obtener usuarios");
+    const apiResponse: ApiResponse<User[]> = await response.json();
+    return apiResponse.data || [];
   },
 
-  async getById(id: string): Promise<User> {
-    const response = await fetch(`${API_URL}/usuarios/${id}`)
-    if (!response.ok) throw new Error('Error al obtener el registro')
-    return response.json()
+  async getById(userId: string): Promise<User> {
+    const response = await fetch(`${API_URL}/users/${userId}`);
+    if (!response.ok) throw new Error("Error al obtener el usuario");
+    const apiResponse: ApiResponse<User> = await response.json();
+    if (!apiResponse.data) throw new Error("Usuario no encontrado");
+    return apiResponse.data;
+  },
+
+  async getByStatus(status: UserStatus): Promise<User[]> {
+    const statusParam = status === "A" ? "ACTIVE" : "INACTIVE";
+    const response = await fetch(`${API_URL}/users/status/${statusParam}`);
+    if (!response.ok) throw new Error("Error al obtener usuarios por estado");
+    const apiResponse: ApiResponse<User[]> = await response.json();
+    return apiResponse.data || [];
   },
 
   async create(data: CreateUserDto): Promise<User> {
-    const response = await fetch(`${API_URL}/usuarios`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const response = await fetch(`${API_URL}/users`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
-    })
-    if (!response.ok) throw new Error('Error al crear el registro')
-    return response.json()
+    });
+    if (!response.ok) throw new Error("Error al crear el usuario");
+    const apiResponse: ApiResponse<User> = await response.json();
+    if (!apiResponse.data) throw new Error("Error al crear el usuario");
+    return apiResponse.data;
+  },
+  async update(userId: string, data: UpdateUserDto): Promise<User> {
+    const response = await fetch(`${API_URL}/users/${userId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error("Usuario no encontrado");
+      }
+      throw new Error("Error al actualizar el usuario");
+    }
+    const apiResponse: ApiResponse<User> = await response.json();
+    if (!apiResponse.data)
+      throw new Error("Error al actualizar el usuario");
+    return apiResponse.data;
+  },
+  async delete(userId: string): Promise<User> {
+    const response = await fetch(`${API_URL}/users/${userId}`, {
+      method: "DELETE",
+    });
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error("Usuario no encontrado");
+      }
+      throw new Error("Error al eliminar el usuario");
+    }
+    const apiResponse: ApiResponse<User> = await response.json();
+    if (!apiResponse.data)
+      throw new Error("Error al eliminar el usuario");
+    return apiResponse.data;
   },
 
-  async update(id: string, data: UpdateUserDto): Promise<User> {
-    const response = await fetch(`${API_URL}/usuarios/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    })
-    if (!response.ok) throw new Error('Error al actualizar el registro')
-    return response.json()
+  async restore(userId: string): Promise<User> {
+    const response = await fetch(`${API_URL}/users/${userId}/restore`, {
+      method: "PATCH",
+    });
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error("Usuario no encontrado");
+      }
+      throw new Error("Error al restaurar el usuario");
+    }
+    const apiResponse: ApiResponse<User> = await response.json();
+    if (!apiResponse.data)
+      throw new Error("Error al restaurar el usuario");
+    return apiResponse.data;
   },
 
-  async delete(id: string): Promise<void> {
-    const response = await fetch(`${API_URL}/usuarios/${id}`, {
-      method: 'DELETE',
-    })
-    if (!response.ok) throw new Error('Error al eliminar el registro')
+  filterUsers(users: User[], filters: UserFilters): User[] {
+    return users.filter((user) => {
+      if (filters.status && user.status !== filters.status)
+        return false;
+      if (filters.role && user.role !== filters.role) return false;
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        const fullName =
+          `${user.firstName} ${user.lastName}`.toLowerCase();
+        const searchableText =
+          `${fullName} ${user.email} ${user.userName} ${user.documentNumber}`.toLowerCase();
+        if (!searchableText.includes(searchLower)) return false;
+      }
+      return true;
+    });
   },
 }
