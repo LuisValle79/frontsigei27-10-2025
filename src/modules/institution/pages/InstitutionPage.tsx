@@ -199,6 +199,9 @@ export function InstitutionPage() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Logo
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Institución
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -229,17 +232,19 @@ export function InstitutionPage() {
                     return (
                       <tr key={institution.institutionId} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
+                          <img
+                            className="h-10 w-10 rounded-lg border border-gray-200 object-cover"
+                            src={institution.institutionInformation.logoUrl || '/default-logo.png'}
+                            alt="Logo"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iMjAiIHk9IjI0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNjc3NDhkIiBmb250LXNpemU9IjEyIj5JPC90ZXh0Pjwvc3ZnPg==';
+                            }}
+                          />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <img
-                              className="h-10 w-10 rounded-lg border border-gray-200 object-cover"
-                              src={institution.institutionInformation.logoUrl || '/default-logo.png'}
-                              alt="Logo"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iMjAiIHk9IjI0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNjc3NDhkIiBmb250LXNpemU9IjEyIj5JPC90ZXh0Pjwvc3ZnPg==';
-                              }}
-                            />
-                            <div className="ml-4">
+                            <div>
                               <div className="text-sm font-medium text-gray-900 max-w-xs truncate">
                                 {institution.institutionInformation.institutionName}
                               </div>
@@ -390,13 +395,20 @@ function InstitutionDetailsModal({
     <div className="fixed inset-0 bg-gray-900/50 bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
         <div className="flex justify-between items-center p-6 border-b border-gray-200 bg-gray-50">
-          <div>
-            <h2 className="text-xl font-bold text-gray-900">
-              {institution.institutionInformation.institutionName}
-            </h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Código: {institution.institutionInformation.modularCode}
-            </p>
+          <div className="flex items-center">
+            <img
+              src={institution.institutionInformation.logoUrl}
+              alt="Institution Logo"
+              className="h-16 w-16 rounded-full object-cover mr-4"
+            />
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">
+                {institution.institutionInformation.institutionName}
+              </h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Código: {institution.institutionInformation.modularCode}
+              </p>
+            </div>
           </div>
           <button
             onClick={onClose}
