@@ -17,35 +17,143 @@ export function PsychologyPage() {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<FilterType>("all");
+  const [filter, setFilter] = useState<FilterType>("active");
   const [searchTerm, setSearchTerm] = useState("");
+  const [appliedSearchTerm, setAppliedSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState<EvaluationType | "all">("all");
+
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [evaluatorFilter, setEvaluatorFilter] = useState("");
+  const [statusFilter] = useState<"all" | "pending" | "completed">("all");
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+
+  // Función para obtener evaluadores únicos
+  const getUniqueEvaluators = useCallback(() => {
+    const evaluators = items
+      .filter((item) => item.evaluatedByName)
+      .map((item) => item.evaluatedByName!)
+      .filter((value, index, self) => self.indexOf(value) === index)
+      .sort();
+    return evaluators;
+  }, [items]);
+
+  // Función para obtener nombres únicos de estudiantes
+  const getUniqueStudentNames = useCallback(() => {
+    const names = items
+      .filter((item) => item.studentName)
+      .map((item) => item.studentName!)
+      .filter((value, index, self) => self.indexOf(value) === index)
+      .sort();
+    return names;
+  }, [items]);
+
+  // Función para filtrar sugerencias
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      setSearchTerm(value);
+
+      if (value.length > 0) {
+        const allNames = getUniqueStudentNames();
+        const filtered = allNames
+          .filter((name) => name.toLowerCase().includes(value.toLowerCase()))
+          .slice(0, 5); // Máximo 5 sugerencias
+
+        setSuggestions(filtered);
+        setShowSuggestions(filtered.length > 0);
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    },
+    [getUniqueStudentNames]
+  );
 
   const applyFilters = useCallback(
     (
       data: PsychologicalEvaluation[],
       search: string,
-      type: EvaluationType | "all"
+      type: EvaluationType | "all",
+      fromDate?: string,
+      toDate?: string,
+      evaluator?: string,
+      status?: "all" | "pending" | "completed"
     ) => {
       let filtered = data;
 
+      // Filtro por nombre del estudiante
       if (search) {
         filtered = filtered.filter(
           (item) =>
-            item.studentId.toLowerCase().includes(search.toLowerCase()) ||
-            item.observations.toLowerCase().includes(search.toLowerCase()) ||
-            item.evaluationReason?.toLowerCase().includes(search.toLowerCase())
+            item.studentName?.toLowerCase().includes(search.toLowerCase()) ||
+            item.studentId.toLowerCase().includes(search.toLowerCase())
         );
       }
 
+      // Filtro por tipo de evaluación
       if (type !== "all") {
         filtered = filtered.filter((item) => item.evaluationType === type);
+      }
+
+      // Filtro por fecha desde
+      if (fromDate) {
+        filtered = filtered.filter((item) => {
+          const itemDate = new Date(item.evaluationDate);
+          const filterDate = new Date(fromDate);
+          return itemDate >= filterDate;
+        });
+      }
+
+      // Filtro por fecha hasta
+      if (toDate) {
+        filtered = filtered.filter((item) => {
+          const itemDate = new Date(item.evaluationDate);
+          const filterDate = new Date(toDate);
+          return itemDate <= filterDate;
+        });
+      }
+
+      // Filtro por evaluador
+      if (evaluator) {
+        filtered = filtered.filter((item) =>
+          item.evaluatedByName?.toLowerCase().includes(evaluator.toLowerCase())
+        );
+      }
+
+      // Filtro por estado (si existe en el modelo)
+      if (status !== "all") {
+        // Aquí puedes agregar lógica según tu modelo de datos
+        // filtered = filtered.filter((item) => item.status === status);
       }
 
       setFilteredItems(filtered);
     },
     []
   );
+
+  const handleSearch = useCallback(() => {
+    setAppliedSearchTerm(searchTerm);
+    applyFilters(
+      items,
+      searchTerm,
+      typeFilter,
+      dateFrom,
+      dateTo,
+      evaluatorFilter,
+      statusFilter
+    );
+  }, [
+    searchTerm,
+    items,
+    typeFilter,
+    dateFrom,
+    dateTo,
+    evaluatorFilter,
+    statusFilter,
+    applyFilters,
+  ]);
 
   const fetchEvaluations = useCallback(
     async (filterType?: FilterType) => {
@@ -67,7 +175,15 @@ export function PsychologyPage() {
         }
 
         setItems(evaluations);
-        applyFilters(evaluations, searchTerm, typeFilter);
+        applyFilters(
+          evaluations,
+          appliedSearchTerm,
+          typeFilter,
+          dateFrom,
+          dateTo,
+          evaluatorFilter,
+          statusFilter
+        );
       } catch {
         setError(
           "No se pudo conectar con el servidor. Verifique que esté ejecutándose en el puerto 9090."
@@ -76,7 +192,16 @@ export function PsychologyPage() {
         setLoading(false);
       }
     },
-    [filter, searchTerm, typeFilter, applyFilters]
+    [
+      filter,
+      appliedSearchTerm,
+      typeFilter,
+      dateFrom,
+      dateTo,
+      evaluatorFilter,
+      statusFilter,
+      applyFilters,
+    ]
   );
 
   // Cargar datos solo una vez al montar el componente
@@ -84,10 +209,27 @@ export function PsychologyPage() {
     fetchEvaluations();
   }, [fetchEvaluations]); // Solo se ejecuta una vez
 
-  // Aplicar filtros cuando cambien los datos o filtros
+  // Aplicar filtros cuando cambien los datos o filtros aplicados
   useEffect(() => {
-    applyFilters(items, searchTerm, typeFilter);
-  }, [items, searchTerm, typeFilter, applyFilters]);
+    applyFilters(
+      items,
+      appliedSearchTerm,
+      typeFilter,
+      dateFrom,
+      dateTo,
+      evaluatorFilter,
+      statusFilter
+    );
+  }, [
+    items,
+    appliedSearchTerm,
+    typeFilter,
+    dateFrom,
+    dateTo,
+    evaluatorFilter,
+    statusFilter,
+    applyFilters,
+  ]);
 
   const handleFilterChange = useCallback(
     async (newFilter: FilterType) => {
@@ -110,14 +252,30 @@ export function PsychologyPage() {
         }
 
         setItems(evaluations);
-        applyFilters(evaluations, searchTerm, typeFilter);
+        applyFilters(
+          evaluations,
+          appliedSearchTerm,
+          typeFilter,
+          dateFrom,
+          dateTo,
+          evaluatorFilter,
+          statusFilter
+        );
       } catch {
         setError("Error al cargar las evaluaciones");
       } finally {
         setLoading(false);
       }
     },
-    [searchTerm, typeFilter, applyFilters]
+    [
+      appliedSearchTerm,
+      typeFilter,
+      dateFrom,
+      dateTo,
+      evaluatorFilter,
+      statusFilter,
+      applyFilters,
+    ]
   );
 
   const handleDelete = useCallback(async (id: string) => {
@@ -401,45 +559,137 @@ export function PsychologyPage() {
               </div>
             </div>
 
-            {/* Filtros compactos */}
-            <div className="bg-gray-50 rounded-lg p-3 border">
-              <div className="flex flex-col lg:flex-row gap-3 items-start lg:items-center">
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleFilterChange("all")}
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      filter === "all"
-                        ? "bg-indigo-600 text-white"
-                        : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
-                    }`}
-                  >
-                    Todas
-                  </button>
-                  <button
-                    onClick={() => handleFilterChange("active")}
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+            {/* Barra de filtros moderna y profesional */}
+            <div className="bg-white border border-gray-200 rounded-xl px-6 py-4 shadow-sm">
+              <div className="flex items-center justify-between gap-4">
+                {/* Toggle Activas - Modernizado */}
+                <div className="flex items-center gap-3">
+                  <div
+                    onClick={() =>
+                      handleFilterChange(
+                        filter === "active" ? "inactive" : "active"
+                      )
+                    }
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full cursor-pointer transition-all duration-300 ease-in-out ${
                       filter === "active"
-                        ? "bg-green-600 text-white"
-                        : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
+                        ? "bg-gradient-to-r from-green-500 to-green-600 shadow-lg shadow-green-500/25"
+                        : "bg-gray-300 hover:bg-gray-400"
                     }`}
                   >
+                    <span
+                      className={`inline-block h-5 w-5 transform rounded-full bg-white transition-all duration-300 ease-in-out shadow-md ${
+                        filter === "active"
+                          ? "translate-x-5 shadow-lg"
+                          : "translate-x-0.5"
+                      }`}
+                    />
+                  </div>
+                  <span className="text-sm font-semibold text-gray-800">
                     Activas
-                  </button>
-                  <button
-                    onClick={() => handleFilterChange("inactive")}
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      filter === "inactive"
-                        ? "bg-red-600 text-white"
-                        : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
-                    }`}
-                  >
-                    Inactivas
-                  </button>
+                  </span>
                 </div>
 
-                <div className="flex-1 max-w-md relative">
+                {/* Botón Todos - Modernizado */}
+                <button
+                  onClick={() => handleFilterChange("all")}
+                  className={`flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium rounded-lg border-2 transition-all duration-200 ${
+                    filter === "all"
+                      ? "bg-gradient-to-r from-gray-50 to-gray-100 text-gray-800 border-gray-300 shadow-md"
+                      : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50 hover:border-gray-300 hover:shadow-sm"
+                  }`}
+                >
                   <svg
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 6h16M4 10h16M4 14h16M4 18h16"
+                    />
+                  </svg>
+                  <span>Todos</span>
+                </button>
+
+                {/* Barra de búsqueda con Autocomplete */}
+                <div className="flex-1 relative max-w-md">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <svg
+                      className="h-5 w-5 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
+                    </svg>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Buscar por nombre"
+                    value={searchTerm}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+                    onFocus={() =>
+                      searchTerm.length > 0 &&
+                      suggestions.length > 0 &&
+                      setShowSuggestions(true)
+                    }
+                    onBlur={() =>
+                      setTimeout(() => setShowSuggestions(false), 200)
+                    }
+                    className="block w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all duration-200"
+                  />
+
+                  {/* Lista de sugerencias */}
+                  {showSuggestions && suggestions.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                      {suggestions.map((suggestion, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() => {
+                            setSearchTerm(suggestion);
+                            setShowSuggestions(false);
+                          }}
+                          className="w-full text-left px-4 py-3 hover:bg-gray-50 focus:bg-gray-50 focus:outline-none text-sm border-b border-gray-100 last:border-b-0 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <svg
+                              className="w-4 h-4 text-gray-400"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                              />
+                            </svg>
+                            <span className="text-gray-900">{suggestion}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Botón Buscar - Modernizado */}
+                <button
+                  onClick={handleSearch}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm font-semibold rounded-lg shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-200 transform hover:scale-105"
+                >
+                  <svg
+                    className="h-4 w-4"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -451,36 +701,47 @@ export function PsychologyPage() {
                       d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                     />
                   </svg>
-                  <input
-                    type="text"
-                    placeholder="Buscar por estudiante, observaciones..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 bg-white border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-                  />
-                </div>
+                  Buscar
+                </button>
 
-                <select
-                  value={typeFilter}
-                  onChange={(e) =>
-                    setTypeFilter(e.target.value as EvaluationType | "all")
-                  }
-                  className="px-3 py-2 bg-white border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-                >
-                  <option value="all">Todos los tipos</option>
-                  <option value="INICIAL">Inicial</option>
-                  <option value="SEGUIMIENTO">Seguimiento</option>
-                  <option value="ESPECIAL">Especial</option>
-                  <option value="DERIVACION">Derivación</option>
-                </select>
-
+                {/* Botón Limpiar - Modernizado */}
                 <button
-                  onClick={() => handleFilterChange(filter)}
-                  className="p-2 text-gray-600 hover:text-gray-800 hover:bg-white rounded-md transition-colors border border-gray-300"
-                  title="Actualizar"
+                  onClick={() => {
+                    setSearchTerm("");
+                    setAppliedSearchTerm("");
+                    setDateFrom("");
+                    setDateTo("");
+                    setEvaluatorFilter("");
+                    setTypeFilter("all");
+                    setShowAdvancedFilters(false);
+                    applyFilters(items, "", "all", "", "", "", statusFilter);
+                  }}
+                  className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200"
+                  title="Limpiar todos los filtros"
                 >
                   <svg
-                    className="w-4 h-4"
+                    className="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                </button>
+
+                {/* Botón Refresh - Modernizado */}
+                <button
+                  onClick={() => handleFilterChange(filter)}
+                  className="p-2.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                  title="Actualizar datos"
+                >
+                  <svg
+                    className="h-5 w-5"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -493,8 +754,125 @@ export function PsychologyPage() {
                     />
                   </svg>
                 </button>
+
+                {/* Separador vertical modernizado */}
+                <div className="h-8 w-px bg-gradient-to-b from-transparent via-gray-300 to-transparent"></div>
+
+                {/* Botón Filtros avanzados - Ultra moderno */}
+                <button
+                  onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                  className={`flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold rounded-lg border-2 transition-all duration-300 transform hover:scale-105 ${
+                    showAdvancedFilters
+                      ? "bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 border-indigo-300 shadow-lg shadow-indigo-500/20"
+                      : "bg-white text-gray-600 border-gray-200 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:border-gray-300 hover:shadow-md"
+                  }`}
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"
+                    />
+                  </svg>
+                  <span>Filtros avanzados</span>
+                  <svg
+                    className={`w-4 h-4 transition-all duration-300 ${
+                      showAdvancedFilters
+                        ? "rotate-180 text-indigo-600"
+                        : "text-gray-400"
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
               </div>
             </div>
+
+            {/* Filtros avanzados */}
+            {showAdvancedFilters && (
+              <div className="bg-white border border-gray-200 rounded-lg px-6 py-5 mt-3 shadow-sm">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {/* Fecha desde */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Fecha desde
+                    </label>
+                    <input
+                      type="date"
+                      value={dateFrom}
+                      onChange={(e) => setDateFrom(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+
+                  {/* Fecha hasta */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Fecha hasta
+                    </label>
+                    <input
+                      type="date"
+                      value={dateTo}
+                      onChange={(e) => setDateTo(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+
+                  {/* Evaluador */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Evaluador
+                    </label>
+                    <select
+                      value={evaluatorFilter}
+                      onChange={(e) => setEvaluatorFilter(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                    >
+                      <option value="">Todos los evaluadores</option>
+                      {getUniqueEvaluators().map((evaluator) => (
+                        <option key={evaluator} value={evaluator}>
+                          {evaluator}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Tipo de evaluación */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Tipo de evaluación
+                    </label>
+                    <select
+                      value={typeFilter}
+                      onChange={(e) =>
+                        setTypeFilter(e.target.value as EvaluationType | "all")
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                    >
+                      <option value="all">Todos los tipos</option>
+                      <option value="INICIAL">Inicial</option>
+                      <option value="SEGUIMIENTO">Seguimiento</option>
+                      <option value="ESPECIAL">Especial</option>
+                      <option value="DERIVACION">Derivación</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

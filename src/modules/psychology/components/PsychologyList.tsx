@@ -77,7 +77,32 @@ export function PsychologyList({
   };
 
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("es-ES");
+    if (!date) return "No especificada";
+
+    // Parsear la fecha como fecha local para evitar problemas de zona horaria
+    const [year, month, day] = date.split("-").map(Number);
+    const dateObj = new Date(year, month - 1, day); // month - 1 porque los meses van de 0-11
+
+    const months = [
+      "Enero",
+      "Febrero",
+      "Marzo",
+      "Abril",
+      "Mayo",
+      "Junio",
+      "Julio",
+      "Agosto",
+      "Septiembre",
+      "Octubre",
+      "Noviembre",
+      "Diciembre",
+    ];
+
+    const dayNumber = dateObj.getDate().toString().padStart(2, "0");
+    const monthName = months[dateObj.getMonth()];
+    const yearNumber = dateObj.getFullYear();
+
+    return `${dayNumber} de ${monthName} del ${yearNumber}`;
   };
 
   const sortedItems = [...items].sort((a, b) => {
