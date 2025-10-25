@@ -4,7 +4,7 @@ import type {
   UpdatePsychologicalEvaluationDto,
 } from "../models/psychology.model";
 
-const BASE_URL = "http://localhost:9090/api/v1";
+const BASE_URL = "http://localhost:9091/api/v1";
 const API_BASE_URL = `${BASE_URL}/psychological-evaluations`;
 const REFERENCE_DATA_URL = `${BASE_URL}/reference-data`;
 

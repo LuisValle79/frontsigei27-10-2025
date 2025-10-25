@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { PsychologyList } from "../components/PsychologyList";
 import { psychologyService } from "../service/Psychology.service";
 import type {
@@ -268,6 +268,24 @@ export function PsychologyPage() {
                 </svg>
                 Nueva Evaluación
               </button>
+            </div>
+
+            {/* Navigation Tabs */}
+            <div className="border-b border-gray-200 mb-6">
+              <nav className="flex space-x-8">
+                <Link
+                  to="/psicologia"
+                  className="border-indigo-500 text-indigo-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
+                >
+                  Evaluaciones Psicológicas
+                </Link>
+                <Link
+                  to="/psychology/supports"
+                  className="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
+                >
+                  Área de Soporte Especial
+                </Link>
+              </nav>
             </div>
 
             {/* Stats compactos */}
