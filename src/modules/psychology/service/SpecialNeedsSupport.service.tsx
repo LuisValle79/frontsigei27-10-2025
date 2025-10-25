@@ -1,6 +1,6 @@
 import type { SpecialNeedsSupport } from '../models/specialNeedSupport';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:9091/api/v1';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:9090/api/v1';
 
 // ------------------ LISTAR TODOS ------------------
 export const getAllSupports = async (): Promise<SpecialNeedsSupport[]> => {

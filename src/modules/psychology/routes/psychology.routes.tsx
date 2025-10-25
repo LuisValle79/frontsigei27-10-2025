@@ -4,10 +4,10 @@
  */
 
 import { Route } from 'react-router-dom'
-import { PsychologyPage } from '../pages/PsychologyPage'
-import { PsychologyCreatePage } from '../pages/PsychologyCreatePage'
-import { PsychologyDetailPage } from '../pages/PsychologyDetailPage'
-import { PsychologyEditPage } from '../pages/PsychologyEditPage'
+import { PsychologyPage } from '../pages/PsychologyEvaluation/PsychologyPage'
+import { PsychologyCreatePage } from '../pages/PsychologyEvaluation/PsychologyCreatePage'
+import { PsychologyDetailPage } from '../pages/PsychologyEvaluation/PsychologyDetailPage'
+import { PsychologyEditPage } from '../pages/PsychologyEvaluation/PsychologyEditPage'
 import { SpecialNeedsSupportListPage } from '../pages/SpecialNeedsSupport/SpecialNeedsSupportListPage'
 import { SpecialNeedsSupportCreatePage } from '../pages/SpecialNeedsSupport/SpecialNeedsSupportCreatePage'
 import { SpecialNeedsSupportEditPage } from '../pages/SpecialNeedsSupport/SpecialNeedsSupportEditPage'

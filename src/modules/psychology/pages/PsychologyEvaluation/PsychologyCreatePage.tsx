@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 import {
   User,
   Brain,
@@ -14,17 +15,17 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
-import { psychologyService } from "../service/Psychology.service";
+import { psychologyService } from "../../service/Psychology.service";
 import type {
   CreatePsychologicalEvaluationDto,
   EvaluationType,
   DevelopmentLevel,
   Status,
-} from "../models/psychology.model";
+} from "../../models/psychology.model";
 import {
   EVALUATION_TYPE_OPTIONS,
   DEVELOPMENT_LEVEL_OPTIONS,
-} from "../models/psychology.model";
+} from "../../models/psychology.model";
 
 interface Student {
   id: string;
@@ -199,28 +200,43 @@ export function PsychologyCreatePage() {
       case "evaluationReason": {
         if (!value) return "El motivo de evaluación es requerido";
         const stringValue = String(value);
-        if (stringValue.length < 10)
-          return "El motivo debe tener al menos 10 caracteres";
+        const trimmedValue = stringValue.trim();
+        if (trimmedValue.length === 0)
+          return "No se permiten solo espacios en blanco";
+        if (stringValue !== trimmedValue)
+          return "No debe iniciar o terminar con espacios en blanco";
+        if (trimmedValue.length < 10)
+          return `Mínimo 10 caracteres requeridos (${trimmedValue.length}/10)`;
         if (stringValue.length > 500)
-          return "El motivo no puede exceder 500 caracteres";
+          return `Máximo 500 caracteres permitidos (${stringValue.length}/500)`;
         return null;
       }
       case "observations": {
         if (!value) return "Las observaciones son requeridas";
         const stringValue = String(value);
-        if (stringValue.length < 20)
-          return "Las observaciones deben tener al menos 20 caracteres";
+        const trimmedValue = stringValue.trim();
+        if (trimmedValue.length === 0)
+          return "No se permiten solo espacios en blanco";
+        if (stringValue !== trimmedValue)
+          return "No debe iniciar o terminar con espacios en blanco";
+        if (trimmedValue.length < 20)
+          return `Mínimo 20 caracteres requeridos (${trimmedValue.length}/20)`;
         if (stringValue.length > 1000)
-          return "Las observaciones no pueden exceder 1000 caracteres";
+          return `Máximo 1000 caracteres permitidos (${stringValue.length}/1000)`;
         return null;
       }
       case "recommendations": {
         if (!value) return "Las recomendaciones son requeridas";
         const stringValue = String(value);
-        if (stringValue.length < 20)
-          return "Las recomendaciones deben tener al menos 20 caracteres";
+        const trimmedValue = stringValue.trim();
+        if (trimmedValue.length === 0)
+          return "No se permiten solo espacios en blanco";
+        if (stringValue !== trimmedValue)
+          return "No debe iniciar o terminar con espacios en blanco";
+        if (trimmedValue.length < 20)
+          return `Mínimo 20 caracteres requeridos (${trimmedValue.length}/20)`;
         if (stringValue.length > 1000)
-          return "Las recomendaciones no pueden exceder 1000 caracteres";
+          return `Máximo 1000 caracteres permitidos (${stringValue.length}/1000)`;
         return null;
       }
       case "followUpFrequency":
@@ -303,12 +319,27 @@ export function PsychologyCreatePage() {
     return true;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep < steps.length - 1) {
       if (validateCurrentStep()) {
         setValidationMessage(null);
         setCurrentStep(currentStep + 1);
       } else {
+        // Mostrar SweetAlert2 para errores de validación
+        await Swal.fire({
+          title: "Campos incompletos",
+          text: "Por favor, completa todos los campos requeridos antes de continuar al siguiente paso.",
+          icon: "warning",
+          confirmButtonColor: "#F59E0B",
+          confirmButtonText: "Entendido",
+          background: "#ffffff",
+          customClass: {
+            popup: "rounded-lg shadow-xl",
+            title: "text-gray-900 font-semibold",
+            htmlContainer: "text-gray-600",
+            confirmButton: "rounded-lg font-medium px-6 py-3",
+          },
+        });
         setValidationMessage(
           "Por favor, corrige los errores antes de continuar."
         );
@@ -350,6 +381,20 @@ export function PsychologyCreatePage() {
 
     if (!allValid) {
       setFieldErrors(allErrors);
+      await Swal.fire({
+        title: "Formulario incompleto",
+        text: "Por favor, corrige todos los errores antes de guardar la evaluación.",
+        icon: "error",
+        confirmButtonColor: "#EF4444",
+        confirmButtonText: "Revisar formulario",
+        background: "#ffffff",
+        customClass: {
+          popup: "rounded-lg shadow-xl",
+          title: "text-gray-900 font-semibold",
+          htmlContainer: "text-gray-600",
+          confirmButton: "rounded-lg font-medium px-6 py-3",
+        },
+      });
       setValidationMessage(
         "Por favor, corrige todos los errores antes de guardar."
       );
@@ -357,13 +402,67 @@ export function PsychologyCreatePage() {
       return;
     }
 
+    // Confirmación antes de guardar
+    const result = await Swal.fire({
+      title: "¿Guardar evaluación?",
+      text: "Se creará una nueva evaluación psicológica con la información proporcionada.",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#10B981",
+      cancelButtonColor: "#6B7280",
+      confirmButtonText: "Sí, guardar",
+      cancelButtonText: "Cancelar",
+      background: "#ffffff",
+      customClass: {
+        popup: "rounded-lg shadow-xl",
+        title: "text-gray-900 font-semibold",
+        htmlContainer: "text-gray-600",
+        confirmButton: "rounded-lg font-medium px-6 py-3",
+        cancelButton: "rounded-lg font-medium px-6 py-3",
+      },
+    });
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
     try {
       setIsLoading(true);
       await psychologyService.createEvaluation(formData);
+
+      await Swal.fire({
+        title: "¡Evaluación creada!",
+        text: "La evaluación psicológica ha sido guardada correctamente.",
+        icon: "success",
+        confirmButtonColor: "#10B981",
+        confirmButtonText: "Continuar",
+        background: "#ffffff",
+        customClass: {
+          popup: "rounded-lg shadow-xl",
+          title: "text-gray-900 font-semibold",
+          htmlContainer: "text-gray-600",
+          confirmButton: "rounded-lg font-medium px-6 py-3",
+        },
+      });
+
       setIsDirty(false);
       navigate("/psicologia");
     } catch (error) {
       console.error("Error saving evaluation:", error);
+      await Swal.fire({
+        title: "Error al guardar",
+        text: "No se pudo guardar la evaluación. Por favor, intenta nuevamente.",
+        icon: "error",
+        confirmButtonColor: "#EF4444",
+        confirmButtonText: "Entendido",
+        background: "#ffffff",
+        customClass: {
+          popup: "rounded-lg shadow-xl",
+          title: "text-gray-900 font-semibold",
+          htmlContainer: "text-gray-600",
+          confirmButton: "rounded-lg font-medium px-6 py-3",
+        },
+      });
       setError(
         "Error al guardar la evaluación. Por favor, intenta nuevamente."
       );
@@ -372,9 +471,30 @@ export function PsychologyCreatePage() {
     }
   };
 
-  const handleBack = () => {
+  const handleBack = async () => {
     if (isDirty) {
-      setShowConfirmDialog(true);
+      const result = await Swal.fire({
+        title: "¿Salir sin guardar?",
+        text: "Tienes cambios sin guardar. Si sales ahora, se perderán todos los datos ingresados.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#EF4444",
+        cancelButtonColor: "#6B7280",
+        confirmButtonText: "Sí, salir",
+        cancelButtonText: "Continuar editando",
+        background: "#ffffff",
+        customClass: {
+          popup: "rounded-lg shadow-xl",
+          title: "text-gray-900 font-semibold",
+          htmlContainer: "text-gray-600",
+          confirmButton: "rounded-lg font-medium px-6 py-3",
+          cancelButton: "rounded-lg font-medium px-6 py-3",
+        },
+      });
+
+      if (result.isConfirmed) {
+        navigate("/psicologia");
+      }
     } else {
       navigate("/psicologia");
     }
@@ -394,9 +514,9 @@ export function PsychologyCreatePage() {
     if (!dateString) return "No especificada";
 
     // Parsear la fecha como fecha local para evitar problemas de zona horaria
-    const [year, month, day] = dateString.split('-').map(Number);
+    const [year, month, day] = dateString.split("-").map(Number);
     const date = new Date(year, month - 1, day); // month - 1 porque los meses van de 0-11
-    
+
     const months = [
       "enero",
       "febrero",
@@ -411,7 +531,7 @@ export function PsychologyCreatePage() {
       "noviembre",
       "diciembre",
     ];
-    
+
     const dayNumber = date.getDate();
     const monthName = months[date.getMonth()];
     const yearNumber = date.getFullYear();
@@ -496,7 +616,7 @@ export function PsychologyCreatePage() {
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-14">
             <div className="flex items-center space-x-4">
               <button
                 onClick={handleBack}
@@ -525,8 +645,8 @@ export function PsychologyCreatePage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="flex gap-6">
           {/* Sidebar de navegación */}
           <div className="w-64 flex-shrink-0">
             <div className="bg-white rounded-lg shadow-sm border p-6">
@@ -709,6 +829,19 @@ export function PsychologyCreatePage() {
                                 </option>
                               ))}
                             </select>
+                            {fieldErrors.classroomId && (
+                              <p className="mt-1 text-sm text-red-600 flex items-center">
+                                <AlertCircle className="w-4 h-4 mr-1" />
+                                {fieldErrors.classroomId}
+                              </p>
+                            )}
+                            {formData.classroomId &&
+                              !fieldErrors.classroomId && (
+                                <p className="mt-1 text-sm text-green-600 flex items-center">
+                                  <CheckCircle className="w-4 h-4 mr-1" />
+                                  Aula seleccionada correctamente
+                                </p>
+                              )}
                           </div>
 
                           <div>
@@ -736,6 +869,19 @@ export function PsychologyCreatePage() {
                                 </option>
                               ))}
                             </select>
+                            {fieldErrors.institutionId && (
+                              <p className="mt-1 text-sm text-red-600 flex items-center">
+                                <AlertCircle className="w-4 h-4 mr-1" />
+                                {fieldErrors.institutionId}
+                              </p>
+                            )}
+                            {formData.institutionId &&
+                              !fieldErrors.institutionId && (
+                                <p className="mt-1 text-sm text-green-600 flex items-center">
+                                  <CheckCircle className="w-4 h-4 mr-1" />
+                                  Institución seleccionada correctamente
+                                </p>
+                              )}
                           </div>
 
                           <div>
@@ -804,19 +950,62 @@ export function PsychologyCreatePage() {
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Motivo de Evaluación *
                           </label>
-                          <textarea
-                            value={formData.evaluationReason}
-                            onChange={(e) =>
-                              handleInputChange(
-                                "evaluationReason",
-                                e.target.value
-                              )
-                            }
-                            rows={4}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="Describe el motivo de la evaluación..."
-                            required
-                          />
+                          <div className="relative">
+                            <textarea
+                              value={formData.evaluationReason}
+                              onChange={(e) =>
+                                handleInputChange(
+                                  "evaluationReason",
+                                  e.target.value
+                                )
+                              }
+                              rows={4}
+                              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                                fieldErrors.evaluationReason
+                                  ? "border-red-300 bg-red-50"
+                                  : (formData.evaluationReason?.length || 0) >=
+                                    10
+                                  ? "border-green-300 bg-green-50"
+                                  : "border-gray-300"
+                              }`}
+                              placeholder="Describe claramente el motivo por el cual se realiza esta evaluación psicológica..."
+                              required
+                            />
+                            <div className="flex justify-between items-center mt-2">
+                              <div className="text-sm">
+                                {fieldErrors.evaluationReason ? (
+                                  <span className="text-red-600 flex items-center gap-1">
+                                    <AlertCircle className="w-4 h-4" />
+                                    {fieldErrors.evaluationReason}
+                                  </span>
+                                ) : (formData.evaluationReason?.length || 0) >=
+                                  10 ? (
+                                  <span className="text-green-600 flex items-center gap-1">
+                                    <CheckCircle className="w-4 h-4" />
+                                    Campo completado correctamente
+                                  </span>
+                                ) : (formData.evaluationReason?.length || 0) >
+                                  0 ? (
+                                  <span className="text-amber-600 flex items-center gap-1">
+                                    <AlertCircle className="w-4 h-4" />
+                                    Mínimo 10 caracteres requeridos
+                                  </span>
+                                ) : null}
+                              </div>
+                              <span
+                                className={`text-sm font-mono ${
+                                  (formData.evaluationReason?.length || 0) >= 10
+                                    ? "text-green-600"
+                                    : (formData.evaluationReason?.length || 0) >
+                                      0
+                                    ? "text-amber-600"
+                                    : "text-gray-500"
+                                }`}
+                              >
+                                {formData.evaluationReason?.length || 0}/500
+                              </span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -956,35 +1145,120 @@ export function PsychologyCreatePage() {
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Observaciones *
                           </label>
-                          <textarea
-                            value={formData.observations}
-                            onChange={(e) =>
-                              handleInputChange("observations", e.target.value)
-                            }
-                            rows={6}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="Observaciones detalladas sobre el estudiante..."
-                            required
-                          />
+                          <div className="relative">
+                            <textarea
+                              value={formData.observations}
+                              onChange={(e) =>
+                                handleInputChange(
+                                  "observations",
+                                  e.target.value
+                                )
+                              }
+                              rows={6}
+                              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                                fieldErrors.observations
+                                  ? "border-red-300 bg-red-50"
+                                  : formData.observations.length >= 20
+                                  ? "border-green-300 bg-green-50"
+                                  : "border-gray-300"
+                              }`}
+                              placeholder="Describe detalladamente las observaciones realizadas durante la evaluación..."
+                              required
+                            />
+                            <div className="flex justify-between items-center mt-2">
+                              <div className="text-sm">
+                                {fieldErrors.observations ? (
+                                  <span className="text-red-600 flex items-center gap-1">
+                                    <AlertCircle className="w-4 h-4" />
+                                    {fieldErrors.observations}
+                                  </span>
+                                ) : formData.observations.length >= 20 ? (
+                                  <span className="text-green-600 flex items-center gap-1">
+                                    <CheckCircle className="w-4 h-4" />
+                                    Campo completado correctamente
+                                  </span>
+                                ) : formData.observations.length > 0 ? (
+                                  <span className="text-amber-600 flex items-center gap-1">
+                                    <AlertCircle className="w-4 h-4" />
+                                    Mínimo 20 caracteres requeridos
+                                  </span>
+                                ) : null}
+                              </div>
+                              <span
+                                className={`text-sm font-mono ${
+                                  formData.observations.length >= 20
+                                    ? "text-green-600"
+                                    : formData.observations.length > 0
+                                    ? "text-amber-600"
+                                    : "text-gray-500"
+                                }`}
+                              >
+                                {formData.observations.length}/1000
+                              </span>
+                            </div>
+                          </div>
                         </div>
 
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Recomendaciones *
                           </label>
-                          <textarea
-                            value={formData.recommendations}
-                            onChange={(e) =>
-                              handleInputChange(
-                                "recommendations",
-                                e.target.value
-                              )
-                            }
-                            rows={6}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="Recomendaciones para el estudiante, familia y docentes..."
-                            required
-                          />
+                          <div className="relative">
+                            <textarea
+                              value={formData.recommendations}
+                              onChange={(e) =>
+                                handleInputChange(
+                                  "recommendations",
+                                  e.target.value
+                                )
+                              }
+                              rows={6}
+                              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                                fieldErrors.recommendations
+                                  ? "border-red-300 bg-red-50"
+                                  : (formData.recommendations?.length || 0) >=
+                                    20
+                                  ? "border-green-300 bg-green-50"
+                                  : "border-gray-300"
+                              }`}
+                              placeholder="Proporciona recomendaciones específicas para el estudiante, familia y docentes..."
+                              required
+                            />
+                            <div className="flex justify-between items-center mt-2">
+                              <div className="text-sm">
+                                {fieldErrors.recommendations ? (
+                                  <span className="text-red-600 flex items-center gap-1">
+                                    <AlertCircle className="w-4 h-4" />
+                                    {fieldErrors.recommendations}
+                                  </span>
+                                ) : (formData.recommendations?.length || 0) >=
+                                  20 ? (
+                                  <span className="text-green-600 flex items-center gap-1">
+                                    <CheckCircle className="w-4 h-4" />
+                                    Campo completado correctamente
+                                  </span>
+                                ) : (formData.recommendations?.length || 0) >
+                                  0 ? (
+                                  <span className="text-amber-600 flex items-center gap-1">
+                                    <AlertCircle className="w-4 h-4" />
+                                    Mínimo 20 caracteres requeridos
+                                  </span>
+                                ) : null}
+                              </div>
+                              <span
+                                className={`text-sm font-mono ${
+                                  (formData.recommendations?.length || 0) >= 20
+                                    ? "text-green-600"
+                                    : (formData.recommendations?.length || 0) >
+                                      0
+                                    ? "text-amber-600"
+                                    : "text-gray-500"
+                                }`}
+                              >
+                                {formData.recommendations?.length || 0}/1000
+                              </span>
+                            </div>
+                          </div>
                         </div>
 
                         <div className="flex items-center space-x-3">
@@ -1053,6 +1327,18 @@ export function PsychologyCreatePage() {
                               </option>
                             ))}
                           </select>
+                          {fieldErrors.evaluatedBy && (
+                            <p className="mt-1 text-sm text-red-600 flex items-center">
+                              <AlertCircle className="w-4 h-4 mr-1" />
+                              {fieldErrors.evaluatedBy}
+                            </p>
+                          )}
+                          {formData.evaluatedBy && !fieldErrors.evaluatedBy && (
+                            <p className="mt-1 text-sm text-green-600 flex items-center">
+                              <CheckCircle className="w-4 h-4 mr-1" />
+                              Evaluador seleccionado correctamente
+                            </p>
+                          )}
                         </div>
                       </div>
                     )}

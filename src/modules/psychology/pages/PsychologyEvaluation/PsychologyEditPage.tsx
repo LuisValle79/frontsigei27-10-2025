@@ -14,18 +14,18 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
-import { psychologyService } from "../service/Psychology.service";
+import { psychologyService } from "../../service/Psychology.service";
 import type {
   PsychologicalEvaluation,
   CreatePsychologicalEvaluationDto,
   EvaluationType,
   DevelopmentLevel,
   Status,
-} from "../models/psychology.model";
+} from "../../models/psychology.model";
 import {
   EVALUATION_TYPE_OPTIONS,
   DEVELOPMENT_LEVEL_OPTIONS,
-} from "../models/psychology.model";
+} from "../../models/psychology.model";
 
 interface Student {
   id: string;

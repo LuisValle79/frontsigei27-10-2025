@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { PsychologyList } from "../components/PsychologyList";
-import { psychologyService } from "../service/Psychology.service";
+import { PsychologyList } from "../../components/PsychologyList";
+import { psychologyService } from "../../service/Psychology.service";
 import type {
   PsychologicalEvaluation,
   EvaluationType,
-} from "../models/psychology.model";
+} from "../../models/psychology.model";
 
 type FilterType = "all" | "active" | "inactive";
 
@@ -219,11 +219,11 @@ export function PsychologyPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-full mx-auto px-6 py-6">
+      <div className="max-w-full mx-auto px-6 py-4">
         {/* Header compacto y profesional */}
-        <div className="mb-6">
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="flex items-center justify-between mb-6">
+        <div className="mb-4">
+          <div className="bg-white rounded-lg shadow-sm border p-4">
+            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-indigo-600 rounded-lg flex items-center justify-center">
                   <svg
@@ -271,7 +271,7 @@ export function PsychologyPage() {
             </div>
 
             {/* Navigation Tabs */}
-            <div className="border-b border-gray-200 mb-6">
+            <div className="border-b border-gray-200 mb-4">
               <nav className="flex space-x-8">
                 <Link
                   to="/psicologia"
@@ -289,8 +289,8 @@ export function PsychologyPage() {
             </div>
 
             {/* Stats compactos */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-blue-600 text-sm font-medium">Total</p>
@@ -316,7 +316,7 @@ export function PsychologyPage() {
                 </div>
               </div>
 
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-green-600 text-sm font-medium">
@@ -344,7 +344,7 @@ export function PsychologyPage() {
                 </div>
               </div>
 
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-red-600 text-sm font-medium">
@@ -372,7 +372,7 @@ export function PsychologyPage() {
                 </div>
               </div>
 
-              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-orange-600 text-sm font-medium">
@@ -402,8 +402,8 @@ export function PsychologyPage() {
             </div>
 
             {/* Filtros compactos */}
-            <div className="bg-gray-50 rounded-lg p-4 border">
-              <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+            <div className="bg-gray-50 rounded-lg p-3 border">
+              <div className="flex flex-col lg:flex-row gap-3 items-start lg:items-center">
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleFilterChange("all")}
