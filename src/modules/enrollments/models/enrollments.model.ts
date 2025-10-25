@@ -3,7 +3,7 @@
  * Define las estructuras de datos para el módulo de Matrículas y Períodos Académicos
  */
 
-// 📝 Modelo principal de Matrícula - Basado en API Backend
+// 📝 Modelo principal de Matrícula - Basado exactamente en el DTO del Backend
 export interface Enrollment {
   // Campos de identificación
   id?: string; // Auto-generado por el backend
@@ -14,25 +14,27 @@ export interface Enrollment {
   // Información académica
   academicYear: string; // ✅ Requerido - "2025", "2024"
   academicPeriodId: string; // ✅ Requerido
-  enrollmentDate?: string; // ISO format date - Auto-generado
-  enrollmentStatus?: 'ACTIVE' | 'INACTIVE' | 'PENDING'; // Default: "ACTIVE"
+  enrollmentDate?: string; // ISO format date - Auto-generado por backend
+  enrollmentStatus?: 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'CANCELLED'; // Default: "ACTIVE"
   enrollmentType?: 'NUEVA' | 'REINSCRIPCION'; // Default: "NUEVA"
   
-  // Información del estudiante
-  ageGroup: '3_AÑOS' | '4_AÑOS' | '5_AÑOS'; // ✅ Requerido
-  shift: 'MAÑANA' | 'TARDE'; // ✅ Requerido
-  section: string; // ✅ Requerido - "A", "B", "C"
-  modality: 'PRESENCIAL' | 'VIRTUAL' | 'HIBRIDA'; // ✅ Requerido
-  educationalLevel?: 'INITIAL' | 'PRIMARY' | 'SECONDARY'; // Default: "INITIAL"
-  studentAge?: number; // 3, 4, 5
-  
   // Información adicional
-  enrollmentCode?: string; // "MAT2025001"
   previousInstitution?: string; // Solo para reinscripciones
   observations?: string; // Texto libre
   
+  // Información del estudiante
+  ageGroup: string; // ✅ Requerido
+  shift: string; // ✅ Requerido
+  section: string; // ✅ Requerido - "A", "B", "C"
+  modality: string; // ✅ Requerido
+  
+  // Nuevos campos del schema del backend
+  educationalLevel?: string; // Default: "INITIAL"
+  studentAge?: number; // Short en backend - 3, 4, 5
+  enrollmentCode?: string; // "MAT2025001"
+  
   // 📋 Documentos Requeridos (todos boolean, default: false)
-  birthCertificate?: boolean; // Partida de nacimiento
+  birthCertificate?: boolean; // Certificado de nacimiento
   studentDni?: boolean; // DNI del estudiante
   guardianDni?: boolean; // DNI del apoderado
   vaccinationCard?: boolean; // Carnet de vacunas
@@ -95,7 +97,8 @@ export interface EnrollmentFilters {
 export const ENROLLMENT_STATUS = {
   ACTIVE: 'ACTIVE',
   INACTIVE: 'INACTIVE',
-  PENDING: 'PENDING'
+  PENDING: 'PENDING',
+  CANCELLED: 'CANCELLED'
 } as const;
 
 export const ENROLLMENT_TYPE = {
@@ -103,28 +106,9 @@ export const ENROLLMENT_TYPE = {
   REINSCRIPCION: 'REINSCRIPCION'
 } as const;
 
-export const AGE_GROUP = {
-  THREE_YEARS: '3_AÑOS',
-  FOUR_YEARS: '4_AÑOS',
-  FIVE_YEARS: '5_AÑOS'
-} as const;
-
-export const SHIFT = {
-  MORNING: 'MAÑANA',
-  AFTERNOON: 'TARDE'
-} as const;
-
-export const MODALITY = {
-  PRESENCIAL: 'PRESENCIAL',
-  VIRTUAL: 'VIRTUAL',
-  HIBRIDA: 'HIBRIDA'
-} as const;
-
-export const EDUCATIONAL_LEVEL = {
-  INITIAL: 'INITIAL',
-  PRIMARY: 'PRIMARY',
-  SECONDARY: 'SECONDARY'
-} as const;
+// Tipos de estado y tipo de matrícula
+export type EnrollmentStatus = typeof ENROLLMENT_STATUS[keyof typeof ENROLLMENT_STATUS];
+export type EnrollmentType = typeof ENROLLMENT_TYPE[keyof typeof ENROLLMENT_TYPE];
 
 
 

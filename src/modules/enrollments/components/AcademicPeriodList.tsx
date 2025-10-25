@@ -28,9 +28,7 @@ export function AcademicPeriodList({ items, onDelete, onView, onEdit }: Academic
   }
 
   const handleDelete = (id: string) => {
-    if (globalThis.confirm('¿Estás seguro de eliminar este período académico?')) {
-      onDelete?.(id)
-    }
+    onDelete?.(id)
   }
 
   // Obtener clase de badge de estado

@@ -185,7 +185,7 @@ export function AcademicPeriodForm({ period, onSave, onCancel }: AcademicPeriodF
                 type="text"
                 id="periodName"
                 name="periodName"
-                value={formData.periodName}
+                value={formData.periodName || ''}
                 onChange={handleChange}
                 className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all ${
                   errors.periodName ? "border-red-300 bg-red-50" : "border-gray-300 hover:border-gray-400"
@@ -208,7 +208,7 @@ export function AcademicPeriodForm({ period, onSave, onCancel }: AcademicPeriodF
                 type="text"
                 id="academicYear"
                 name="academicYear"
-                value={formData.academicYear}
+                value={formData.academicYear || ''}
                 onChange={handleChange}
                 className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all ${
                   errors.academicYear ? "border-red-300 bg-red-50" : "border-gray-300 hover:border-gray-400"
@@ -231,7 +231,7 @@ export function AcademicPeriodForm({ period, onSave, onCancel }: AcademicPeriodF
                 type="text"
                 id="institutionId"
                 name="institutionId"
-                value={formData.institutionId}
+                value={formData.institutionId || ''}
                 onChange={handleChange}
                 className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all ${
                   errors.institutionId ? "border-red-300 bg-red-50" : "border-gray-300 hover:border-gray-400"
@@ -253,7 +253,7 @@ export function AcademicPeriodForm({ period, onSave, onCancel }: AcademicPeriodF
               <select
                 id="status"
                 name="status"
-                value={formData.status}
+                value={formData.status || ''}
                 onChange={handleChange}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent hover:border-gray-400 transition-all"
               >
@@ -281,7 +281,7 @@ export function AcademicPeriodForm({ period, onSave, onCancel }: AcademicPeriodF
                 type="datetime-local"
                 id="startDate"
                 name="startDate"
-                value={formData.startDate}
+                value={formData.startDate || ''}
                 onChange={handleChange}
                 className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                   errors.startDate ? "border-red-300 bg-red-50" : "border-gray-300 hover:border-gray-400"
@@ -303,7 +303,7 @@ export function AcademicPeriodForm({ period, onSave, onCancel }: AcademicPeriodF
                 type="datetime-local"
                 id="endDate"
                 name="endDate"
-                value={formData.endDate}
+                value={formData.endDate || ''}
                 onChange={handleChange}
                 className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                   errors.endDate ? "border-red-300 bg-red-50" : "border-gray-300 hover:border-gray-400"
@@ -352,7 +352,7 @@ export function AcademicPeriodForm({ period, onSave, onCancel }: AcademicPeriodF
                 type="datetime-local"
                 id="enrollmentPeriodStart"
                 name="enrollmentPeriodStart"
-                value={formData.enrollmentPeriodStart}
+                value={formData.enrollmentPeriodStart || ''}
                 onChange={handleChange}
                 className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${
                   errors.enrollmentPeriodStart ? "border-red-300 bg-red-50" : "border-gray-300 hover:border-gray-400"
@@ -374,7 +374,7 @@ export function AcademicPeriodForm({ period, onSave, onCancel }: AcademicPeriodF
                 type="datetime-local"
                 id="enrollmentPeriodEnd"
                 name="enrollmentPeriodEnd"
-                value={formData.enrollmentPeriodEnd}
+                value={formData.enrollmentPeriodEnd || ''}
                 onChange={handleChange}
                 className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${
                   errors.enrollmentPeriodEnd ? "border-red-300 bg-red-50" : "border-gray-300 hover:border-gray-400"
@@ -431,7 +431,7 @@ export function AcademicPeriodForm({ period, onSave, onCancel }: AcademicPeriodF
                   type="datetime-local"
                   id="lateEnrollmentEndDate"
                   name="lateEnrollmentEndDate"
-                  value={formData.lateEnrollmentEndDate}
+                  value={formData.lateEnrollmentEndDate || ''}
                   onChange={handleChange}
                   className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${
                     errors.lateEnrollmentEndDate ? "border-red-300 bg-red-50" : "border-gray-300 hover:border-gray-400"

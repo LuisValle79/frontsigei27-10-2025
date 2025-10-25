@@ -235,7 +235,7 @@ export function EnrollmentForm({ enrollment, academicPeriods, onSave, onCancel }
                     type="text"
                     id="studentId"
                     name="studentId"
-                    value={formData.studentId}
+                    value={formData.studentId || ''}
                     onChange={handleChange}
                     className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                       errors.studentId ? "border-red-300 bg-red-50" : "border-gray-300 hover:border-gray-400"
@@ -257,7 +257,7 @@ export function EnrollmentForm({ enrollment, academicPeriods, onSave, onCancel }
                   <select
                     id="ageGroup"
                     name="ageGroup"
-                    value={formData.ageGroup}
+                    value={formData.ageGroup || ''}
                     onChange={handleChange}
                     className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                       errors.ageGroup ? "border-red-300 bg-red-50" : "border-gray-300 hover:border-gray-400"
@@ -283,7 +283,7 @@ export function EnrollmentForm({ enrollment, academicPeriods, onSave, onCancel }
                     type="number"
                     id="studentAge"
                     name="studentAge"
-                    value={formData.studentAge}
+                    value={formData.studentAge || ''}
                     onChange={handleChange}
                     min="1"
                     max="10"
@@ -333,7 +333,7 @@ export function EnrollmentForm({ enrollment, academicPeriods, onSave, onCancel }
                     type="text"
                     id="institutionId"
                     name="institutionId"
-                    value={formData.institutionId}
+                    value={formData.institutionId || ''}
                     onChange={handleChange}
                     className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                       errors.institutionId ? "border-red-300 bg-red-50" : "border-gray-300 hover:border-gray-400"
@@ -356,7 +356,7 @@ export function EnrollmentForm({ enrollment, academicPeriods, onSave, onCancel }
                     type="text"
                     id="classroomId"
                     name="classroomId"
-                    value={formData.classroomId}
+                    value={formData.classroomId || ''}
                     onChange={handleChange}
                     className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                       errors.classroomId ? "border-red-300 bg-red-50" : "border-gray-300 hover:border-gray-400"
@@ -379,7 +379,7 @@ export function EnrollmentForm({ enrollment, academicPeriods, onSave, onCancel }
                     type="text"
                     id="section"
                     name="section"
-                    value={formData.section}
+                    value={formData.section || ''}
                     onChange={handleChange}
                     className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                       errors.section ? "border-red-300 bg-red-50" : "border-gray-300 hover:border-gray-400"
@@ -401,7 +401,7 @@ export function EnrollmentForm({ enrollment, academicPeriods, onSave, onCancel }
                   <select
                     id="shift"
                     name="shift"
-                    value={formData.shift}
+                    value={formData.shift || ''}
                     onChange={handleChange}
                     className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                       errors.shift ? "border-red-300 bg-red-50" : "border-gray-300 hover:border-gray-400"
@@ -425,7 +425,7 @@ export function EnrollmentForm({ enrollment, academicPeriods, onSave, onCancel }
                   <select
                     id="modality"
                     name="modality"
-                    value={formData.modality}
+                    value={formData.modality || ''}
                     onChange={handleChange}
                     className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                       errors.modality ? "border-red-300 bg-red-50" : "border-gray-300 hover:border-gray-400"
@@ -450,7 +450,7 @@ export function EnrollmentForm({ enrollment, academicPeriods, onSave, onCancel }
                   <select
                     id="educationalLevel"
                     name="educationalLevel"
-                    value={formData.educationalLevel}
+                    value={formData.educationalLevel || ''}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent hover:border-gray-400 transition-all"
                   >
@@ -478,7 +478,7 @@ export function EnrollmentForm({ enrollment, academicPeriods, onSave, onCancel }
                     type="text"
                     id="academicYear"
                     name="academicYear"
-                    value={formData.academicYear}
+                    value={formData.academicYear || ''}
                     onChange={handleChange}
                     className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                       errors.academicYear ? "border-red-300 bg-red-50" : "border-gray-300 hover:border-gray-400"
@@ -500,7 +500,7 @@ export function EnrollmentForm({ enrollment, academicPeriods, onSave, onCancel }
                   <select
                     id="academicPeriodId"
                     name="academicPeriodId"
-                    value={formData.academicPeriodId}
+                    value={formData.academicPeriodId || ''}
                     onChange={handleChange}
                     className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                       errors.academicPeriodId ? "border-red-300 bg-red-50" : "border-gray-300 hover:border-gray-400"
@@ -542,7 +542,7 @@ export function EnrollmentForm({ enrollment, academicPeriods, onSave, onCancel }
                   <select
                     id="enrollmentStatus"
                     name="enrollmentStatus"
-                    value={formData.enrollmentStatus}
+                    value={formData.enrollmentStatus || ''}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent hover:border-gray-400 transition-all"
                   >
@@ -559,7 +559,7 @@ export function EnrollmentForm({ enrollment, academicPeriods, onSave, onCancel }
                   <select
                     id="enrollmentType"
                     name="enrollmentType"
-                    value={formData.enrollmentType}
+                    value={formData.enrollmentType || ''}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent hover:border-gray-400 transition-all"
                   >

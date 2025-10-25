@@ -1,6 +1,11 @@
-import type { Enrollment } from '../models/enrollments.model';
+/**
+ * Servicio de Matrículas - Integración completa con Backend
+ * Basado en la documentación de API del microservicio de matrículas
+ */
 
-// 🌐 Configuración de API integrada
+import type { Enrollment, CreateEnrollmentDto, UpdateEnrollmentDto } from '../models/enrollments.model';
+
+// 🌐 Configuración de API - Basada en documentación backend
 const API_CONFIG = {
   BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:9082/api/v1',
   TIMEOUT: 15000,
@@ -8,33 +13,25 @@ const API_CONFIG = {
   DEFAULT_HEADERS: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    'X-Requested-With': 'XMLHttpRequest',
   },
   ENDPOINTS: {
-    ENROLLMENTS: {
-      BASE: '/enrollments',
-      GET_ALL: '/enrollments',
-      GET_BY_ID: (id: string) => `/enrollments/${id}`,
-      CREATE: '/enrollments',
-      UPDATE: (id: string) => `/enrollments/${id}`,
-      DELETE: (id: string) => `/enrollments/${id}`,
-      RESTORE: (id: string) => `/enrollments/${id}/restore`,
-      BY_INSTITUTION: (institutionId: string) => `/enrollments/institution/${institutionId}`,
-      BY_STUDENT: (studentId: string) => `/enrollments/student/${studentId}`,
-    },
-
+    GET_ALL: '/enrollments',
+    GET_BY_ID: (id: string) => `/enrollments/${id}`,
+    CREATE: '/enrollments',
+    UPDATE: (id: string) => `/enrollments/${id}`,
+    DELETE: (id: string) => `/enrollments/${id}`,
+    RESTORE: (id: string) => `/enrollments/${id}/restore`,
+    BY_INSTITUTION: (institutionId: string) => `/enrollments/institution/${institutionId}`,
+    BY_STUDENT: (studentId: string) => `/enrollments/student/${studentId}`,
   },
   DEVELOPMENT: {
-    USE_MOCK_DATA: false,
-    LOG_REQUESTS: true,
-    LOG_RESPONSES: true,
+    USE_MOCK_DATA: import.meta.env.VITE_USE_MOCK_DATA === 'true' || false,
+    LOG_REQUESTS: import.meta.env.DEV || false,
+    LOG_RESPONSES: import.meta.env.DEV || false,
   }
 };
 
-// Development flag to skip API calls and use mock data directly
-const USE_MOCK_DATA_ONLY = API_CONFIG.DEVELOPMENT.USE_MOCK_DATA;
-
-// Mock data for development when backend is not available
+// 📋 Mock data para desarrollo cuando el backend no está disponible
 const mockEnrollments: Enrollment[] = [
   {
     id: 'enr_a1b2c3d4',
@@ -46,6 +43,8 @@ const mockEnrollments: Enrollment[] = [
     enrollmentDate: '2024-10-15T10:30:00',
     enrollmentStatus: 'ACTIVE',
     enrollmentType: 'NUEVA',
+    previousInstitution: '',
+    observations: 'Primera matrícula del estudiante - Documentos completos',
     ageGroup: '3_AÑOS',
     shift: 'MAÑANA',
     section: 'A',
@@ -55,17 +54,15 @@ const mockEnrollments: Enrollment[] = [
     enrollmentCode: 'MAT2025001',
     birthCertificate: true,
     studentDni: true,
-    guardianDni: false,
+    guardianDni: true,
     vaccinationCard: true,
     disabilityCertificate: false,
-    utilityBill: false,
+    utilityBill: true,
     psychologicalReport: false,
-    studentPhoto: false,
-    healthRecord: false,
-    signedEnrollmentForm: false,
-    dniVerification: false,
-    observations: 'Primera matrícula del estudiante',
-    previousInstitution: undefined,
+    studentPhoto: true,
+    healthRecord: true,
+    signedEnrollmentForm: true,
+    dniVerification: true,
     deleted: false,
   },
   {
@@ -75,7 +72,7 @@ const mockEnrollments: Enrollment[] = [
     classroomId: 'cls_002',
     academicYear: '2025',
     academicPeriodId: 'period_2025_1',
-    enrollmentDate: '2024-10-16T14:20:00',
+    enrollmentDate: '2024-10-16T14:20:00.000Z',
     enrollmentStatus: 'ACTIVE',
     enrollmentType: 'REINSCRIPCION',
     ageGroup: '4_AÑOS',
@@ -91,7 +88,7 @@ const mockEnrollments: Enrollment[] = [
     vaccinationCard: true,
     disabilityCertificate: false,
     utilityBill: true,
-    psychologicalReport: false,
+    psychologicalReport: true,
     studentPhoto: true,
     healthRecord: true,
     signedEnrollmentForm: true,
@@ -107,7 +104,7 @@ const mockEnrollments: Enrollment[] = [
     classroomId: 'cls_003',
     academicYear: '2025',
     academicPeriodId: 'period_2025_1',
-    enrollmentDate: '2024-10-17T09:15:00',
+    enrollmentDate: '2024-10-17T09:15:00.000Z',
     enrollmentStatus: 'PENDING',
     enrollmentType: 'NUEVA',
     ageGroup: '5_AÑOS',
@@ -128,15 +125,79 @@ const mockEnrollments: Enrollment[] = [
     healthRecord: false,
     signedEnrollmentForm: false,
     dniVerification: false,
-    observations: 'Pendiente de documentos',
-    previousInstitution: undefined,
+    observations: 'Pendiente de documentos - Falta completar requisitos',
+    previousInstitution: '',
+    deleted: false,
+  },
+  {
+    id: 'enr_d4e5f6g7',
+    studentId: 'std_004',
+    institutionId: 'inst_001',
+    classroomId: 'cls_001',
+    academicYear: '2025',
+    academicPeriodId: 'period_2025_1',
+    enrollmentDate: '2024-10-18T11:45:00.000Z',
+    enrollmentStatus: 'ACTIVE',
+    enrollmentType: 'NUEVA',
+    ageGroup: '3_AÑOS',
+    shift: 'TARDE',
+    section: 'A',
+    modality: 'HIBRIDA',
+    educationalLevel: 'INITIAL',
+    studentAge: 3,
+    enrollmentCode: 'MAT2025004',
+    birthCertificate: true,
+    studentDni: true,
+    guardianDni: true,
+    vaccinationCard: true,
+    disabilityCertificate: true,
+    utilityBill: true,
+    psychologicalReport: true,
+    studentPhoto: true,
+    healthRecord: true,
+    signedEnrollmentForm: true,
+    dniVerification: true,
+    observations: 'Matrícula híbrida - Necesidades especiales',
+    previousInstitution: '',
+    deleted: false,
+  },
+  {
+    id: 'enr_e5f6g7h8',
+    studentId: 'std_005',
+    institutionId: 'inst_002',
+    classroomId: 'cls_004',
+    academicYear: '2025',
+    academicPeriodId: 'period_2025_2',
+    enrollmentDate: '2024-10-19T08:30:00.000Z',
+    enrollmentStatus: 'CANCELLED',
+    enrollmentType: 'NUEVA',
+    ageGroup: '4_AÑOS',
+    shift: 'MAÑANA',
+    section: 'D',
+    modality: 'VIRTUAL',
+    educationalLevel: 'INITIAL',
+    studentAge: 4,
+    enrollmentCode: 'MAT2025005',
+    birthCertificate: true,
+    studentDni: true,
+    guardianDni: false,
+    vaccinationCard: true,
+    disabilityCertificate: false,
+    utilityBill: false,
+    psychologicalReport: false,
+    studentPhoto: false,
+    healthRecord: false,
+    signedEnrollmentForm: false,
+    dniVerification: false,
+    observations: 'Matrícula cancelada por solicitud de los padres',
+    previousInstitution: '',
     deleted: false,
   },
 ];
 
 
 
-// Helper function to implement a timeout for fetch requests
+// Helper function para manejar requests con timeout
 const fetchWithTimeout = async (
   url: string,
   options: RequestInit = {},
@@ -158,15 +219,18 @@ const fetchWithTimeout = async (
   }
 };
 
-// Helper function to handle fetch errors and fallback to mock data
-const handleFetch = async <T,>(
-  url: string,
+// Helper function para manejar requests con reintentos y fallback
+const handleRequest = async <T,>(
+  endpoint: string,
   options: RequestInit = {},
   mockData?: T,
   retries: number = API_CONFIG.RETRIES
 ): Promise<T> => {
-  // If in development mode with mock data only, skip API call
-  if (USE_MOCK_DATA_ONLY && mockData !== undefined) {
+  const url = `${API_CONFIG.BASE_URL}${endpoint}`;
+  const method = options.method || 'GET';
+
+  // Si está en modo mock, devolver mock data directamente
+  if (API_CONFIG.DEVELOPMENT.USE_MOCK_DATA && mockData !== undefined) {
     if (API_CONFIG.DEVELOPMENT.LOG_REQUESTS) {
       console.log(`🔧 Using mock data for ${url}:`, mockData);
     }
@@ -178,7 +242,7 @@ const handleFetch = async <T,>(
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       if (API_CONFIG.DEVELOPMENT.LOG_REQUESTS) {
-        console.log(`🚀 API Call (Attempt ${attempt}): ${options.method || 'GET'} ${url}`);
+        console.log(`🚀 API Request (Attempt ${attempt}): ${method} ${url}`);
       }
 
       const response = await fetchWithTimeout(url, {
@@ -191,37 +255,36 @@ const handleFetch = async <T,>(
 
       if (!response.ok) {
         let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-        let errors: Record<string, string> | undefined;
+        let errorData: any = null;
 
         try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorMessage;
-          errors = errorData.errors;
-          if (API_CONFIG.DEVELOPMENT.LOG_RESPONSES) {
-            console.error(`❌ API Error:`, errorData);
-          }
+          errorData = await response.json();
+          errorMessage = errorData?.message || errorMessage;
         } catch (e) {
-          if (API_CONFIG.DEVELOPMENT.LOG_RESPONSES) {
-            console.error(`❌ API Error: ${response.status} ${response.statusText}`);
-          }
+          // Si no se puede parsear el JSON, usar el mensaje por defecto
         }
 
-        if (response.status === 404) {
-          throw new Error(errorMessage || 'Resource not found');
-        } else if (response.status === 400 && errors) {
-          throw new Error(
-            `${errorMessage}: ${Object.entries(errors)
-              .map(([key, value]) => `${key}: ${value}`)
-              .join(', ')}`
-          );
+        if (API_CONFIG.DEVELOPMENT.LOG_RESPONSES) {
+          console.error(`❌ API Error: ${response.status} ${url}`, errorData);
+        }
+
+        // Manejar diferentes tipos de errores
+        if (response.status === 400 && errorData && 'errors' in errorData) {
+          const validationErrors = errorData.errors as Record<string, string>;
+          const errorMessages = Object.entries(validationErrors)
+            .map(([key, value]) => `${key}: ${value}`)
+            .join(', ');
+          throw new Error(`${errorMessage}: ${errorMessages}`);
+        } else if (response.status === 404) {
+          throw new Error(errorMessage || 'Recurso no encontrado');
         } else if (response.status === 500) {
-          throw new Error(errorMessage || 'Internal server error');
+          throw new Error(errorMessage || 'Error interno del servidor');
         } else {
           throw new Error(errorMessage);
         }
       }
 
-      // Handle 204 No Content responses
+      // Manejar respuestas 204 No Content
       if (response.status === 204) {
         if (API_CONFIG.DEVELOPMENT.LOG_RESPONSES) {
           console.log(`✅ API Success: ${response.status} No Content`);
@@ -231,14 +294,16 @@ const handleFetch = async <T,>(
 
       const data = await response.json();
       if (API_CONFIG.DEVELOPMENT.LOG_RESPONSES) {
-        console.log(`✅ API Success:`, data);
+        console.log(`✅ API Success: ${response.status} ${url}`, data);
       }
       return data;
+
     } catch (error) {
       lastError = error instanceof Error ? error : new Error('Unknown error');
       console.error(`❌ API Failed for ${url} (Attempt ${attempt}):`, lastError);
 
-      if (attempt === retries && mockData !== undefined && !USE_MOCK_DATA_ONLY) {
+      // En el último intento, usar mock data si está disponible
+      if (attempt === retries && mockData !== undefined && !API_CONFIG.DEVELOPMENT.USE_MOCK_DATA) {
         console.warn(`🔄 Falling back to mock data for ${url}:`, mockData);
         return mockData;
       }
@@ -248,16 +313,15 @@ const handleFetch = async <T,>(
   throw lastError || new Error('All retry attempts failed');
 };
 
-// 📝 ENROLLMENT API FUNCTIONS - Complete Backend Integration
+// 📝 ENROLLMENT API FUNCTIONS - Integración completa con Backend
 export const enrollmentService = {
   /**
    * 📋 GET /api/v1/enrollments
    * Listar todas las matrículas
-   * @returns Array de matrículas
    */
   getAllEnrollments: async (): Promise<Enrollment[]> => {
-    return handleFetch<Enrollment[]>(
-      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ENROLLMENTS.GET_ALL}`,
+    return handleRequest<Enrollment[]>(
+      API_CONFIG.ENDPOINTS.GET_ALL,
       { method: 'GET' },
       mockEnrollments
     );
@@ -266,30 +330,26 @@ export const enrollmentService = {
   /**
    * 🔍 GET /api/v1/enrollments/{id}
    * Obtener matrícula por ID
-   * @param id ID de la matrícula
-   * @returns Matrícula encontrada
-   * @throws Error si el ID no es proporcionado o la matrícula no existe
    */
   getEnrollmentById: async (id: string): Promise<Enrollment> => {
     if (!id) {
       throw new Error('ID de matrícula es requerido');
     }
 
-    return handleFetch<Enrollment>(
-      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ENROLLMENTS.GET_BY_ID(id)}`,
+    const mockData = mockEnrollments.find((e) => e.id === id) || mockEnrollments[0];
+    return handleRequest<Enrollment>(
+      API_CONFIG.ENDPOINTS.GET_BY_ID(id),
       { method: 'GET' },
-      mockEnrollments.find((e) => e.id === id) || mockEnrollments[0]
+      mockData
     );
   },
 
   /**
    * 📝 POST /api/v1/enrollments
    * Crear nueva matrícula
-   * @param enrollment Datos de la matrícula
-   * @returns Matrícula creada
-   * @throws Error si faltan campos requeridos o los datos son inválidos
    */
-  createEnrollment: async (enrollment: Omit<Enrollment, 'id'>): Promise<Enrollment> => {
+  createEnrollment: async (enrollment: CreateEnrollmentDto): Promise<Enrollment> => {
+    // Validar datos antes de enviar
     const { isValid, errors } = enrollmentUtils.validateEnrollmentData(enrollment);
     if (!isValid) {
       throw new Error(
@@ -299,29 +359,33 @@ export const enrollmentService = {
       );
     }
 
-    return handleFetch<Enrollment>(
-      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ENROLLMENTS.CREATE}`,
+    const mockData = { 
+      ...enrollment, 
+      id: `enr_${Date.now()}`, 
+      enrollmentDate: new Date().toISOString(),
+      deleted: false 
+    } as Enrollment;
+
+    return handleRequest<Enrollment>(
+      API_CONFIG.ENDPOINTS.CREATE,
       {
         method: 'POST',
         body: JSON.stringify(enrollment),
       },
-      { ...enrollment, id: `enr_${Date.now()}`, deleted: false } as Enrollment
+      mockData
     );
   },
 
   /**
    * ✏️ PUT /api/v1/enrollments/{id}
    * Actualizar matrícula existente
-   * @param id ID de la matrícula
-   * @param enrollment Datos a actualizar
-   * @returns Matrícula actualizada
-   * @throws Error si el ID no es proporcionado o la matrícula no existe
    */
-  updateEnrollment: async (id: string, enrollment: Partial<Enrollment>): Promise<Enrollment> => {
+  updateEnrollment: async (id: string, enrollment: UpdateEnrollmentDto): Promise<Enrollment> => {
     if (!id) {
       throw new Error('ID de matrícula es requerido para actualizar');
     }
 
+    // Validar datos antes de enviar
     const { isValid, errors } = enrollmentUtils.validateEnrollmentData(enrollment);
     if (!isValid) {
       throw new Error(
@@ -331,30 +395,33 @@ export const enrollmentService = {
       );
     }
 
-    return handleFetch<Enrollment>(
-      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ENROLLMENTS.UPDATE(id)}`,
+    const mockData = { 
+      ...mockEnrollments.find((e) => e.id === id), 
+      ...enrollment, 
+      id 
+    } as Enrollment;
+
+    return handleRequest<Enrollment>(
+      API_CONFIG.ENDPOINTS.UPDATE(id),
       {
         method: 'PUT',
         body: JSON.stringify(enrollment),
       },
-      { ...mockEnrollments.find((e) => e.id === id), ...enrollment, id } as Enrollment
+      mockData
     );
   },
 
   /**
    * 🗑️ DELETE /api/v1/enrollments/{id}
    * Eliminar matrícula (soft delete)
-   * @param id ID de la matrícula
-   * @returns void
-   * @throws Error si el ID no es proporcionado o la matrícula no existe
    */
   deleteEnrollment: async (id: string): Promise<void> => {
     if (!id) {
       throw new Error('ID de matrícula es requerido para eliminar');
     }
 
-    return handleFetch<void>(
-      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ENROLLMENTS.DELETE(id)}`,
+    return handleRequest<void>(
+      API_CONFIG.ENDPOINTS.DELETE(id),
       { method: 'DELETE' },
       undefined
     );
@@ -363,57 +430,55 @@ export const enrollmentService = {
   /**
    * 🔄 PATCH /api/v1/enrollments/{id}/restore
    * Restaurar matrícula eliminada
-   * @param id ID de la matrícula
-   * @returns Matrícula restaurada
-   * @throws Error si el ID no es proporcionado o la matrícula no existe
    */
   restoreEnrollment: async (id: string): Promise<Enrollment> => {
     if (!id) {
       throw new Error('ID de matrícula es requerido para restaurar');
     }
 
-    return handleFetch<Enrollment>(
-      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ENROLLMENTS.RESTORE(id)}`,
+    const mockData = { 
+      ...mockEnrollments.find((e) => e.id === id), 
+      deleted: false 
+    } as Enrollment;
+
+    return handleRequest<Enrollment>(
+      API_CONFIG.ENDPOINTS.RESTORE(id),
       { method: 'PATCH' },
-      { ...mockEnrollments.find((e) => e.id === id), deleted: false } as Enrollment
+      mockData
     );
   },
 
   /**
    * 🏫 GET /api/v1/enrollments/institution/{institutionId}
    * Obtener matrículas por institución
-   * @param institutionId ID de la institución
-   * @returns Array de matrículas
-   * @throws Error si el ID no es proporcionado
    */
   getEnrollmentsByInstitution: async (institutionId: string): Promise<Enrollment[]> => {
     if (!institutionId) {
       throw new Error('ID de institución es requerido');
     }
 
-    return handleFetch<Enrollment[]>(
-      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ENROLLMENTS.BY_INSTITUTION(institutionId)}`,
+    const mockData = mockEnrollments.filter((e) => e.institutionId === institutionId);
+    return handleRequest<Enrollment[]>(
+      API_CONFIG.ENDPOINTS.BY_INSTITUTION(institutionId),
       { method: 'GET' },
-      mockEnrollments.filter((e) => e.institutionId === institutionId)
+      mockData
     );
   },
 
   /**
    * 👨‍🎓 GET /api/v1/enrollments/student/{studentId}
    * Obtener matrículas por estudiante
-   * @param studentId ID del estudiante
-   * @returns Array de matrículas
-   * @throws Error si el ID no es proporcionado
    */
   getEnrollmentsByStudent: async (studentId: string): Promise<Enrollment[]> => {
     if (!studentId) {
       throw new Error('ID de estudiante es requerido');
     }
 
-    return handleFetch<Enrollment[]>(
-      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ENROLLMENTS.BY_STUDENT(studentId)}`,
+    const mockData = mockEnrollments.filter((e) => e.studentId === studentId);
+    return handleRequest<Enrollment[]>(
+      API_CONFIG.ENDPOINTS.BY_STUDENT(studentId),
       { method: 'GET' },
-      mockEnrollments.filter((e) => e.studentId === studentId)
+      mockData
     );
   },
 };
@@ -430,7 +495,7 @@ export const enrollmentUtils = {
   validateEnrollmentData: (data: Partial<Enrollment>) => {
     const errors: Record<string, string> = {};
 
-    // Campos requeridos
+    // Campos requeridos según la documentación de la API
     const requiredFields = [
       { key: 'studentId', label: 'ID del estudiante' },
       { key: 'institutionId', label: 'ID de la institución' },
@@ -450,14 +515,10 @@ export const enrollmentUtils = {
       }
     }
 
-    // Validar valores permitidos
+    // Validar valores permitidos según la documentación
     const allowedValues = {
-      enrollmentStatus: ['ACTIVE', 'INACTIVE', 'PENDING'],
+      enrollmentStatus: ['ACTIVE', 'INACTIVE', 'PENDING', 'CANCELLED'],
       enrollmentType: ['NUEVA', 'REINSCRIPCION'],
-      ageGroup: ['3_AÑOS', '4_AÑOS', '5_AÑOS'],
-      shift: ['MAÑANA', 'TARDE'],
-      modality: ['PRESENCIAL', 'VIRTUAL', 'HIBRIDA'],
-      educationalLevel: ['INITIAL', 'PRIMARY', 'SECONDARY'],
     };
 
     for (const [field, values] of Object.entries(allowedValues)) {
@@ -505,55 +566,7 @@ export const enrollmentUtils = {
 
 };
 
-// 🔧 API CONFIGURATION
-export const apiConfig = {
-  baseUrl: API_CONFIG.BASE_URL,
-  timeout: API_CONFIG.TIMEOUT,
-  retries: API_CONFIG.RETRIES,
-
-  /**
-   * Cambiar entre modo mock y API real
-   * @param useMock Activar/desactivar modo mock
-   */
-  setMockMode: (useMock: boolean) => {
-    console.log(`Mock mode ${useMock ? 'enabled' : 'disabled'}`);
-    // Nota: USE_MOCK_DATA_ONLY es constante, por lo que este método solo registra el cambio
-  },
-
-  /**
-   * Verificar disponibilidad del backend
-   * @returns Boolean indicando si el backend está disponible
-   */
-  checkBackendHealth: async (): Promise<boolean> => {
-    try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/health`, {
-        method: 'GET',
-        headers: API_CONFIG.DEFAULT_HEADERS,
-      });
-      return response.ok;
-    } catch (error) {
-      console.warn('Backend health check failed:', error);
-      return false;
-    }
-  },
-};
-
-// 🎯 FUNCIONES DE ESTADO Y MANEJO (anteriormente en useEnrollmentApi hook)
-// Estas funciones pueden ser usadas directamente en los componentes
-
-/**
- * Función para crear un estado de carga simple
- */
-export const createLoadingState = <T,>(initialData: T) => {
-  return {
-    data: initialData,
-    loading: false,
-    error: null as string | null,
-    setLoading: (loading: boolean) => ({ loading }),
-    setError: (error: string | null) => ({ error }),
-    setData: (data: T) => ({ data, loading: false, error: null })
-  };
-};
+// 🎯 FUNCIONES DE UTILIDAD Y HELPERS
 
 /**
  * Función helper para manejar errores de API de forma consistente
@@ -566,9 +579,9 @@ export const handleApiError = (error: unknown): string => {
 };
 
 /**
- * Función para validar datos antes de enviar
+ * Función para validar y crear matrícula
  */
-export const validateAndCreate = async (data: Omit<Enrollment, 'id'>) => {
+export const validateAndCreate = async (data: CreateEnrollmentDto): Promise<Enrollment> => {
   const validation = enrollmentUtils.validateEnrollmentData(data);
   if (!validation.isValid) {
     throw new Error(`Datos inválidos: ${Object.values(validation.errors).join(', ')}`);
@@ -577,9 +590,9 @@ export const validateAndCreate = async (data: Omit<Enrollment, 'id'>) => {
 };
 
 /**
- * Función para validar y actualizar
+ * Función para validar y actualizar matrícula
  */
-export const validateAndUpdate = async (id: string, data: Partial<Enrollment>) => {
+export const validateAndUpdate = async (id: string, data: UpdateEnrollmentDto): Promise<Enrollment> => {
   const validation = enrollmentUtils.validateEnrollmentData(data);
   if (!validation.isValid) {
     throw new Error(`Datos inválidos: ${Object.values(validation.errors).join(', ')}`);
@@ -587,7 +600,5 @@ export const validateAndUpdate = async (id: string, data: Partial<Enrollment>) =
   return enrollmentService.updateEnrollment(id, data);
 };
 
-
-
-// Legacy service for backward compatibility
+// 🔄 Compatibilidad con versiones anteriores
 export const enrollmentsService = enrollmentService;

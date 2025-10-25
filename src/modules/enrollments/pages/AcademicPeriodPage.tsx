@@ -137,15 +137,55 @@ export function AcademicPeriodPage() {
   }, []);
 
   const handleSaveAcademicPeriod = useCallback(async (period: AcademicPeriod) => {
+    // Mostrar confirmación antes de guardar
+    const isEditing = !!period.id;
+    const result = await Swal.fire({
+      title: isEditing ? '¿Actualizar período académico?' : '¿Crear nuevo período académico?',
+      text: isEditing 
+        ? 'Se actualizarán los datos del período académico seleccionado.' 
+        : 'Se creará un nuevo período académico con los datos ingresados.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: isEditing ? 'Sí, actualizar' : 'Sí, crear',
+      cancelButtonText: 'Cancelar',
+      reverseButtons: true,
+      confirmButtonColor: '#7c3aed',
+      cancelButtonColor: '#6b7280',
+    });
+
+    if (!result.isConfirmed) return;
+
     try {
       if (period.id) {
         await validateAndUpdatePeriod(period.id, period);
-        showNotification('success', 'Período académico actualizado correctamente');
+        
+        // Mostrar alerta de éxito
+        await Swal.fire({
+          title: '¡Actualizado!',
+          text: 'El período académico ha sido actualizado correctamente.',
+          icon: 'success',
+          confirmButtonText: 'Entendido',
+          confirmButtonColor: '#7c3aed',
+          timer: 2000,
+          timerProgressBar: true
+        });
+        
         // Actualizar la lista local
         setAcademicPeriods(prev => prev.map(p => p.id === period.id ? period : p));
       } else {
         const newPeriod = await validateAndCreatePeriod(period);
-        showNotification('success', 'Período académico creado correctamente');
+        
+        // Mostrar alerta de éxito
+        await Swal.fire({
+          title: '¡Creado!',
+          text: 'El período académico ha sido creado correctamente.',
+          icon: 'success',
+          confirmButtonText: 'Entendido',
+          confirmButtonColor: '#7c3aed',
+          timer: 2000,
+          timerProgressBar: true
+        });
+        
         // Agregar a la lista local
         setAcademicPeriods(prev => [...prev, newPeriod]);
       }
@@ -154,7 +194,15 @@ export function AcademicPeriodPage() {
     } catch (err) {
       console.error("❌ Error saving academic period:", err);
       const errorMessage = handleApiError(err);
-      showNotification('error', `Error al guardar el período académico: ${errorMessage}`);
+      
+      // Mostrar alerta de error
+      await Swal.fire({
+        title: '¡Error!',
+        text: `Error al guardar el período académico: ${errorMessage}`,
+        icon: 'error',
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#dc2626'
+      });
     }
   }, [showNotification]);
 

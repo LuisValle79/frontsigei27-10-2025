@@ -34,9 +34,7 @@ export function EnrollmentList({ items, onDelete, onView, onEdit }: EnrollmentLi
   }
 
   const handleDelete = (id: string) => {
-    if (globalThis.confirm('¿Estás seguro de eliminar esta matrícula?')) {
-      onDelete?.(id)
-    }
+    onDelete?.(id)
   }
 
   // Obtener clase de badge de estado

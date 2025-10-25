@@ -3,28 +3,28 @@
  * Define las estructuras de datos para Períodos Académicos
  */
 
-// 🎓 Modelo principal de Período Académico - Basado en API Backend
+// 🎓 Modelo principal de Período Académico - Basado exactamente en el DTO del Backend
 export interface AcademicPeriod {
   // Campos de identificación
-  id?: string; // Auto-generado por el backend - "period_xxxxxxxx"
-  institutionId: string; // ✅ Requerido - "inst_001"
+  id?: string; // Auto-generado por el backend
+  institutionId: string; // ✅ Requerido
   academicYear: string; // ✅ Requerido - "2025", "2024"
   periodName: string; // ✅ Requerido - "Primer Bimestre", "Segundo Semestre"
   
   // Fechas del período académico
-  startDate: string; // ✅ Requerido - ISO format date
-  endDate: string; // ✅ Requerido - ISO format date
+  startDate: string; // ✅ Requerido - ISO format date (LocalDateTime en backend)
+  endDate: string; // ✅ Requerido - ISO format date (LocalDateTime en backend)
   
   // Fechas del período de matrícula
   enrollmentPeriodStart: string; // ✅ Requerido - ISO format date
   enrollmentPeriodEnd: string; // ✅ Requerido - ISO format date
   
   // Configuración de matrícula tardía
-  allowLateEnrollment: boolean; // Default: false
-  lateEnrollmentEndDate?: string; // ISO format date - Requerido si allowLateEnrollment = true
+  allowLateEnrollment: boolean; // boolean primitivo en backend (no Boolean)
+  lateEnrollmentEndDate?: string; // ISO format date - Opcional
   
   // Estado y control
-  status: 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'CLOSED'; // Default: "ACTIVE"
+  status: string; // String en backend, no enum
   deleted?: boolean; // Soft delete - Default: false
 }
 
@@ -51,7 +51,7 @@ export interface AcademicPeriodStats {
   pending: number;
 }
 
-// 📝 Constantes de valores permitidos para Academic Periods
+// 📝 Constantes de valores permitidos para Academic Periods (basado en backend)
 export const PERIOD_STATUS = {
   ACTIVE: 'ACTIVE',
   INACTIVE: 'INACTIVE',

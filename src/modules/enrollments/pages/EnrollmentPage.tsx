@@ -250,15 +250,55 @@ export function EnrollmentPage() {
   }, []);
 
   const handleSaveEnrollment = useCallback(async (enrollment: Enrollment) => {
+    // Mostrar confirmación antes de guardar
+    const isEditing = !!enrollment.id;
+    const result = await Swal.fire({
+      title: isEditing ? '¿Actualizar matrícula?' : '¿Crear nueva matrícula?',
+      text: isEditing 
+        ? 'Se actualizarán los datos de la matrícula seleccionada.' 
+        : 'Se creará una nueva matrícula con los datos ingresados.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: isEditing ? 'Sí, actualizar' : 'Sí, crear',
+      cancelButtonText: 'Cancelar',
+      reverseButtons: true,
+      confirmButtonColor: '#059669',
+      cancelButtonColor: '#6b7280',
+    });
+
+    if (!result.isConfirmed) return;
+
     try {
       if (enrollment.id) {
         await validateAndUpdate(enrollment.id, enrollment);
-        showNotification('success', 'Matrícula actualizada correctamente');
+        
+        // Mostrar alerta de éxito
+        await Swal.fire({
+          title: '¡Actualizado!',
+          text: 'La matrícula ha sido actualizada correctamente.',
+          icon: 'success',
+          confirmButtonText: 'Entendido',
+          confirmButtonColor: '#059669',
+          timer: 2000,
+          timerProgressBar: true
+        });
+        
         // Actualizar la lista local
         setEnrollments(prev => prev.map(e => e.id === enrollment.id ? enrollment : e));
       } else {
         const newEnrollment = await validateAndCreate(enrollment);
-        showNotification('success', 'Matrícula creada correctamente');
+        
+        // Mostrar alerta de éxito
+        await Swal.fire({
+          title: '¡Creado!',
+          text: 'La matrícula ha sido creada correctamente.',
+          icon: 'success',
+          confirmButtonText: 'Entendido',
+          confirmButtonColor: '#059669',
+          timer: 2000,
+          timerProgressBar: true
+        });
+        
         // Agregar a la lista local
         setEnrollments(prev => [...prev, newEnrollment]);
       }
@@ -267,7 +307,15 @@ export function EnrollmentPage() {
     } catch (err) {
       console.error("❌ Error saving enrollment:", err);
       const errorMessage = handleApiError(err);
-      showNotification('error', `Error al guardar la matrícula: ${errorMessage}`);
+      
+      // Mostrar alerta de error
+      await Swal.fire({
+        title: '¡Error!',
+        text: `Error al guardar la matrícula: ${errorMessage}`,
+        icon: 'error',
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#dc2626'
+      });
     }
   }, [showNotification]);
 
@@ -282,15 +330,55 @@ export function EnrollmentPage() {
   }, []);
 
   const handleSaveAcademicPeriod = useCallback(async (period: AcademicPeriod) => {
+    // Mostrar confirmación antes de guardar
+    const isEditing = !!period.id;
+    const result = await Swal.fire({
+      title: isEditing ? '¿Actualizar período académico?' : '¿Crear nuevo período académico?',
+      text: isEditing 
+        ? 'Se actualizarán los datos del período académico seleccionado.' 
+        : 'Se creará un nuevo período académico con los datos ingresados.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: isEditing ? 'Sí, actualizar' : 'Sí, crear',
+      cancelButtonText: 'Cancelar',
+      reverseButtons: true,
+      confirmButtonColor: '#7c3aed',
+      cancelButtonColor: '#6b7280',
+    });
+
+    if (!result.isConfirmed) return;
+
     try {
       if (period.id) {
         await validateAndUpdatePeriod(period.id, period);
-        showNotification('success', 'Período académico actualizado correctamente');
+        
+        // Mostrar alerta de éxito
+        await Swal.fire({
+          title: '¡Actualizado!',
+          text: 'El período académico ha sido actualizado correctamente.',
+          icon: 'success',
+          confirmButtonText: 'Entendido',
+          confirmButtonColor: '#7c3aed',
+          timer: 2000,
+          timerProgressBar: true
+        });
+        
         // Actualizar la lista local
         setAcademicPeriods(prev => prev.map(p => p.id === period.id ? period : p));
       } else {
         const newPeriod = await validateAndCreatePeriod(period);
-        showNotification('success', 'Período académico creado correctamente');
+        
+        // Mostrar alerta de éxito
+        await Swal.fire({
+          title: '¡Creado!',
+          text: 'El período académico ha sido creado correctamente.',
+          icon: 'success',
+          confirmButtonText: 'Entendido',
+          confirmButtonColor: '#7c3aed',
+          timer: 2000,
+          timerProgressBar: true
+        });
+        
         // Agregar a la lista local
         setAcademicPeriods(prev => [...prev, newPeriod]);
       }
@@ -299,7 +387,15 @@ export function EnrollmentPage() {
     } catch (err) {
       console.error("❌ Error saving academic period:", err);
       const errorMessage = handleApiError(err);
-      showNotification('error', `Error al guardar el período académico: ${errorMessage}`);
+      
+      // Mostrar alerta de error
+      await Swal.fire({
+        title: '¡Error!',
+        text: `Error al guardar el período académico: ${errorMessage}`,
+        icon: 'error',
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#dc2626'
+      });
     }
   }, [showNotification]);
 
