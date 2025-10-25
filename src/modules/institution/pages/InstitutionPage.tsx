@@ -406,7 +406,7 @@ function InstitutionDetailsModal({
                 {institution.institutionInformation.institutionName}
               </h2>
               <p className="text-sm text-gray-600 mt-1">
-                Código: {institution.institutionInformation.modularCode}
+                Código Institución: {institution.institutionInformation.codeInstitution} | Código Modular: {institution.institutionInformation.modularCode}
               </p>
             </div>
           </div>
@@ -430,6 +430,7 @@ function InstitutionDetailsModal({
                 </h3>
                 <div className="space-y-3">
                   <InfoField label="Nombre" value={institution.institutionInformation.institutionName} />
+                  <InfoField label="Código Institución" value={institution.institutionInformation.codeInstitution} />
                   <InfoField label="Código Modular" value={institution.institutionInformation.modularCode} />
                   <InfoField label="Tipo" value={institution.institutionInformation.institutionType} />
                   <InfoField label="Nivel Educativo" value={institution.institutionInformation.institutionLevel} />
@@ -475,18 +476,23 @@ function InstitutionDetailsModal({
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3 border-b border-gray-200 pb-2">
-                  Auxiliares ({institution.auxiliaries.length})
+                <h3 className="text-lg font-semibold text-gray-900 mb-3 border-b border-gray-200 pb-2 flex items-center justify-between">
+                  <span>Auxiliares ({institution.auxiliaries.length})</span>
+                  <span className="text-xs text-gray-500 font-normal">(Solo lectura)</span>
                 </h3>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {institution.auxiliaries.map((auxiliary) => (
-                    <div key={auxiliary.userId} className="p-3 bg-green-50 rounded-lg">
-                      <p className="font-medium text-gray-900">{auxiliary.firstName} {auxiliary.lastName}</p>
-                      <p className="text-sm text-gray-600">{auxiliary.documentType}: {auxiliary.documentNumber}</p>
-                      <p className="text-sm text-gray-600">Email: {auxiliary.email}</p>
-                      <p className="text-sm text-gray-600">Teléfono: {auxiliary.phone}</p>
-                    </div>
-                  ))}
+                  {institution.auxiliaries.length > 0 ? (
+                    institution.auxiliaries.map((auxiliary) => (
+                      <div key={auxiliary.userId} className="p-3 bg-green-50 rounded-lg">
+                        <p className="font-medium text-gray-900">{auxiliary.firstName} {auxiliary.lastName}</p>
+                        <p className="text-sm text-gray-600">{auxiliary.documentType}: {auxiliary.documentNumber}</p>
+                        <p className="text-sm text-gray-600">Email: {auxiliary.email}</p>
+                        <p className="text-sm text-gray-600">Teléfono: {auxiliary.phone}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-gray-500 text-center py-4 text-sm">No hay auxiliares asignados. Los auxiliares se gestionan desde el microservicio de usuarios.</p>
+                  )}
                 </div>
               </div>
 

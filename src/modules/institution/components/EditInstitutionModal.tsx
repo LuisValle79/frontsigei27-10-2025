@@ -24,6 +24,7 @@ const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
   const [editedClassroomIds, setEditedClassroomIds] = useState<Set<string>>(new Set());
   const [deletedClassroomIds, setDeletedClassroomIds] = useState<Set<string>>(new Set());
   const [restoredClassroomIds, setRestoredClassroomIds] = useState<Set<string>>(new Set());
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   // Pre-cargar datos existentes de la institución
   const [formData, setFormData] = useState<FormData>({
@@ -58,23 +59,7 @@ const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
       email: '',
       role: 'DIRECTOR'
     },
-    auxiliaries: institution.auxiliaries?.length > 0 ? institution.auxiliaries.map((aux: UserResponse) => ({
-      firstName: aux.firstName,
-      lastName: aux.lastName,
-      documentType: aux.documentType,
-      documentNumber: aux.documentNumber,
-      phone: aux.phone,
-      email: aux.email,
-      role: 'AUXILIAR'
-    })) : [{
-      firstName: '',
-      lastName: '',
-      documentType: '',
-      documentNumber: '',
-      phone: '',
-      email: '',
-      role: 'AUXILIAR'
-    }],
+    auxiliaries: [], // Los auxiliares no se editan desde aquí, solo se visualizan
     ugel: institution.ugel,
     dre: institution.dre
   });
@@ -84,9 +69,221 @@ const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
     'Dirección y Contacto',
     'Configuración Académica',
     'Director',
-    'Auxiliares',
     'Configuración Final'
   ];
+
+  // Funciones de validación en tiempo real (copiadas del CreateModal)
+  const validateInstitutionName = (name: string): string | null => {
+    if (!name) return 'El nombre es requerido';
+    if (name.length < 5) return 'El nombre debe tener al menos 5 caracteres';
+    return null;
+  };
+
+  const validateCodeInstitution = (code: string): string | null => {
+    if (!code) return 'El código de institución es requerido';
+    if (!/^\d{8}$/.test(code)) return 'El código debe tener exactamente 8 dígitos';
+    return null;
+  };
+
+  const validateModularCode = (code: string): string | null => {
+    if (!code) return 'El código modular es requerido';
+    if (!/^\d{7}$/.test(code)) return 'El código modular debe tener exactamente 7 dígitos';
+    return null;
+  };
+
+  const validateInstitutionType = (type: string): string | null => {
+    if (!type) return 'Debe seleccionar un tipo de institución';
+    return null;
+  };
+
+  const validateInstitutionLevel = (level: string): string | null => {
+    if (!level) return 'Debe seleccionar un nivel de institución';
+    return null;
+  };
+
+  const validateGender = (gender: string): string | null => {
+    if (!gender) return 'Debe seleccionar un género';
+    return null;
+  };
+
+  const validateSlogan = (slogan: string): string | null => {
+    if (!slogan) return null;
+    if (slogan.length < 5) return 'El lema debe tener al menos 5 caracteres';
+    return null;
+  };
+
+  const validateLogoUrl = (url: string): string | null => {
+    if (!url) return 'La URL del logo es requerida';
+    const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
+    if (!urlPattern.test(url)) return 'URL inválida';
+    return null;
+  };
+
+  const validateDepartment = (dept: string): string | null => {
+    if (!dept) return 'El departamento es requerido';
+    if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(dept)) return 'Solo se permiten letras';
+    return null;
+  };
+
+  const validateProvince = (prov: string): string | null => {
+    if (!prov) return 'La provincia es requerida';
+    if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(prov)) return 'Solo se permiten letras';
+    return null;
+  };
+
+  const validateDistrict = (dist: string): string | null => {
+    if (!dist) return 'El distrito es requerido';
+    if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(dist)) return 'Solo se permiten letras';
+    return null;
+  };
+
+  const validatePostalCode = (code: string): string | null => {
+    if (!code) return null;
+    if (!/^\d+$/.test(code)) return 'Solo se permiten números';
+    return null;
+  };
+
+  const validateStreet = (street: string): string | null => {
+    if (!street) return 'La dirección es requerida';
+    if (!/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,#-]+$/.test(street)) return 'Caracteres inválidos en la dirección';
+    return null;
+  };
+
+  const validateContactMethodType = (type: string): string | null => {
+    if (!type) return 'Debe seleccionar un tipo de contacto';
+    return null;
+  };
+
+  const validateContactMethodValue = (type: string, value: string): string | null => {
+    if (!value) return 'El valor es requerido';
+    
+    switch (type) {
+      case 'TELEFONO':
+      case 'CELULAR':
+      case 'WHATSAPP':
+        const cleanValue = value.replace(/[\s-]/g, '');
+        if (!/^\d{9}$/.test(cleanValue)) return 'Debe tener exactamente 9 dígitos';
+        if (!cleanValue.startsWith('9')) return 'Debe comenzar con 9';
+        break;
+      case 'EMAIL':
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Email inválido';
+        break;
+      case 'WEBSITE':
+        const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
+        if (!urlPattern.test(value)) return 'URL inválida';
+        break;
+    }
+    return null;
+  };
+
+  const validateAtLeastOneContact = (): boolean => {
+    return formData.contactMethods.some(cm => cm.type && cm.value);
+  };
+
+  const getInputClasses = (hasError: boolean, fieldTouched: boolean = false) => {
+    const baseClasses = 'w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white';
+    if (!fieldTouched) return `${baseClasses} border-gray-300`;
+    if (hasError) return `${baseClasses} border-red-500`;
+    return `${baseClasses} border-green-500`;
+  };
+
+  const getSelectClasses = (hasError: boolean, fieldTouched: boolean = false) => {
+    const baseClasses = 'w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white';
+    if (!fieldTouched) return `${baseClasses} border-gray-300`;
+    if (hasError) return `${baseClasses} border-red-500`;
+    return `${baseClasses} border-green-500`;
+  };
+
+  const handleBlur = (fieldName: string) => {
+    setTouched(prev => ({ ...prev, [fieldName]: true }));
+  };
+
+  // Validar si el paso actual tiene errores
+  const validateCurrentStep = (): boolean => {
+    switch (currentStep) {
+      case 1: // Información Básica
+        return !validateInstitutionName(formData.institutionInformation.institutionName) &&
+               !validateCodeInstitution(formData.institutionInformation.codeInstitution) &&
+               !validateModularCode(formData.institutionInformation.modularCode) &&
+               !validateInstitutionType(formData.institutionInformation.institutionType) &&
+               !validateInstitutionLevel(formData.institutionInformation.institutionLevel) &&
+               !validateGender(formData.institutionInformation.gender) &&
+               !validateSlogan(formData.institutionInformation.slogan) &&
+               !validateLogoUrl(formData.institutionInformation.logoUrl);
+      
+      case 2: // Dirección y Contacto
+        const hasAddressErrors = 
+          !!validateDepartment(formData.address.department) ||
+          !!validateProvince(formData.address.province) ||
+          !!validateDistrict(formData.address.district) ||
+          !!validatePostalCode(formData.address.postalCode) ||
+          !!validateStreet(formData.address.street);
+        
+        const hasContactErrors = formData.contactMethods.some(contact => 
+          !!validateContactMethodType(contact.type) ||
+          !!validateContactMethodValue(contact.type, contact.value)
+        );
+        
+        return !hasAddressErrors && !hasContactErrors && validateAtLeastOneContact();
+      
+      case 3: // Configuración Académica
+      case 4: // Director
+      case 5: // Configuración Final
+        // Estos pasos no tienen validaciones críticas por ahora
+        return true;
+      
+      default:
+        return true;
+    }
+  };
+
+  // Marcar todos los campos del paso actual como tocados
+  const touchAllFieldsInCurrentStep = () => {
+    const newTouched: Record<string, boolean> = { ...touched };
+    
+    switch (currentStep) {
+      case 1:
+        newTouched['institutionName'] = true;
+        newTouched['codeInstitution'] = true;
+        newTouched['modularCode'] = true;
+        newTouched['institutionType'] = true;
+        newTouched['institutionLevel'] = true;
+        newTouched['gender'] = true;
+        newTouched['slogan'] = true;
+        newTouched['logoUrl'] = true;
+        break;
+      
+      case 2:
+        newTouched['department'] = true;
+        newTouched['province'] = true;
+        newTouched['district'] = true;
+        newTouched['postalCode'] = true;
+        newTouched['street'] = true;
+        formData.contactMethods.forEach((_, index) => {
+          newTouched[`contactType_${index}`] = true;
+          newTouched[`contactValue_${index}`] = true;
+        });
+        break;
+    }
+    
+    setTouched(newTouched);
+  };
+
+  // Manejar navegación al siguiente paso
+  const handleNextStep = () => {
+    // Marcar todos los campos como tocados para mostrar errores
+    touchAllFieldsInCurrentStep();
+    
+    // Validar el paso actual
+    if (!validateCurrentStep()) {
+      setError('Por favor, corrija los errores antes de continuar');
+      return;
+    }
+    
+    // Si todo está bien, avanzar al siguiente paso
+    setError(null);
+    setCurrentStep(prev => Math.min(steps.length, prev + 1));
+  };
 
   // Manejar cambios en los campos
   const handleInputChange = (section: keyof FormData, field: string, value: string | number) => {
@@ -139,24 +336,61 @@ const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
 
   // Prevenir envío del formulario con Enter
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && currentStep !== 6) {
+    if (e.key === 'Enter' && currentStep !== steps.length) {
       e.preventDefault();
       e.stopPropagation();
-      // Si no estamos en el paso 6, navegar al siguiente paso
-      if (currentStep < 6) {
+      // Si no estamos en el último paso, navegar al siguiente paso
+      if (currentStep < steps.length) {
         setCurrentStep(prev => prev + 1);
       }
-    } else if (e.key === 'Enter' && currentStep === 6) {
+    } else if (e.key === 'Enter' && currentStep === steps.length) {
       e.preventDefault();
       e.stopPropagation();
-      // En el paso 6, ejecutar el envío
+      // En el último paso, ejecutar el envío
       handleFormSubmit();
     }
   };
 
   // Manejar envío del formulario de forma explícita
   const handleFormSubmit = async () => {
-    if (currentStep !== 6 || loading) {
+    if (currentStep !== steps.length || loading) {
+      return;
+    }
+    
+    // Validar todos los pasos críticos antes de enviar
+    const step1Valid = 
+      !validateInstitutionName(formData.institutionInformation.institutionName) &&
+      !validateCodeInstitution(formData.institutionInformation.codeInstitution) &&
+      !validateModularCode(formData.institutionInformation.modularCode) &&
+      !validateInstitutionType(formData.institutionInformation.institutionType) &&
+      !validateInstitutionLevel(formData.institutionInformation.institutionLevel) &&
+      !validateGender(formData.institutionInformation.gender) &&
+      !validateSlogan(formData.institutionInformation.slogan) &&
+      !validateLogoUrl(formData.institutionInformation.logoUrl);
+    
+    const hasAddressErrors = 
+      !!validateDepartment(formData.address.department) ||
+      !!validateProvince(formData.address.province) ||
+      !!validateDistrict(formData.address.district) ||
+      !!validatePostalCode(formData.address.postalCode) ||
+      !!validateStreet(formData.address.street);
+    
+    const hasContactErrors = formData.contactMethods.some(contact => 
+      !!validateContactMethodType(contact.type) ||
+      !!validateContactMethodValue(contact.type, contact.value)
+    );
+    
+    const step2Valid = !hasAddressErrors && !hasContactErrors && validateAtLeastOneContact();
+    
+    if (!step1Valid) {
+      setError('Hay errores en el Paso 1: Información Básica. Por favor, revise los campos.');
+      setCurrentStep(1);
+      return;
+    }
+    
+    if (!step2Valid) {
+      setError('Hay errores en el Paso 2: Dirección y Contacto. Por favor, revise los campos.');
+      setCurrentStep(2);
       return;
     }
     
@@ -351,11 +585,43 @@ const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
                   <input
                     type="text"
                     required
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    className={getInputClasses(
+                      !!validateInstitutionName(formData.institutionInformation.institutionName),
+                      touched['institutionName']
+                    )}
                     value={formData.institutionInformation.institutionName}
                     onChange={(e) => handleInputChange('institutionInformation', 'institutionName', e.target.value)}
+                    onBlur={() => handleBlur('institutionName')}
                     placeholder="Ej: I.E. José María Arguedas"
                   />
+                  {touched['institutionName'] && validateInstitutionName(formData.institutionInformation.institutionName) && (
+                    <p className="text-red-500 text-xs mt-1">{validateInstitutionName(formData.institutionInformation.institutionName)}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Código de Institución *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    className={getInputClasses(
+                      !!validateCodeInstitution(formData.institutionInformation.codeInstitution),
+                      touched['codeInstitution']
+                    )}
+                    value={formData.institutionInformation.codeInstitution}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '').slice(0, 8);
+                      handleInputChange('institutionInformation', 'codeInstitution', value);
+                    }}
+                    onBlur={() => handleBlur('codeInstitution')}
+                    placeholder="Ej: 12345678"
+                    maxLength={8}
+                  />
+                  {touched['codeInstitution'] && validateCodeInstitution(formData.institutionInformation.codeInstitution) && (
+                    <p className="text-red-500 text-xs mt-1">{validateCodeInstitution(formData.institutionInformation.codeInstitution)}</p>
+                  )}
                 </div>
 
                 <div>
@@ -365,11 +631,22 @@ const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
                   <input
                     type="text"
                     required
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    className={getInputClasses(
+                      !!validateModularCode(formData.institutionInformation.modularCode),
+                      touched['modularCode']
+                    )}
                     value={formData.institutionInformation.modularCode}
-                    onChange={(e) => handleInputChange('institutionInformation', 'modularCode', e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '').slice(0, 7);
+                      handleInputChange('institutionInformation', 'modularCode', value);
+                    }}
+                    onBlur={() => handleBlur('modularCode')}
                     placeholder="Ej: 0123456"
+                    maxLength={7}
                   />
+                  {touched['modularCode'] && validateModularCode(formData.institutionInformation.modularCode) && (
+                    <p className="text-red-500 text-xs mt-1">{validateModularCode(formData.institutionInformation.modularCode)}</p>
+                  )}
                 </div>
 
                 <div>
@@ -378,15 +655,22 @@ const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
                   </label>
                   <select
                     required
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    className={getSelectClasses(
+                      !!validateInstitutionType(formData.institutionInformation.institutionType),
+                      touched['institutionType']
+                    )}
                     value={formData.institutionInformation.institutionType}
                     onChange={(e) => handleInputChange('institutionInformation', 'institutionType', e.target.value)}
+                    onBlur={() => handleBlur('institutionType')}
                   >
                     <option value="">Seleccionar</option>
                     <option value="PUBLICO">Público</option>
                     <option value="PRIVADO">Privado</option>
                     <option value="PARROQUIAL">Parroquial</option>
                   </select>
+                  {touched['institutionType'] && validateInstitutionType(formData.institutionInformation.institutionType) && (
+                    <p className="text-red-500 text-xs mt-1">{validateInstitutionType(formData.institutionInformation.institutionType)}</p>
+                  )}
                 </div>
 
                 <div>
@@ -395,15 +679,22 @@ const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
                   </label>
                   <select
                     required
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    className={getSelectClasses(
+                      !!validateInstitutionLevel(formData.institutionInformation.institutionLevel),
+                      touched['institutionLevel']
+                    )}
                     value={formData.institutionInformation.institutionLevel}
                     onChange={(e) => handleInputChange('institutionInformation', 'institutionLevel', e.target.value)}
+                    onBlur={() => handleBlur('institutionLevel')}
                   >
                     <option value="">Seleccionar</option>
                     <option value="INICIAL">Inicial</option>
                     <option value="PRIMARIA">Primaria</option>
                     <option value="SECUNDARIA">Secundaria</option>
                   </select>
+                  {touched['institutionLevel'] && validateInstitutionLevel(formData.institutionInformation.institutionLevel) && (
+                    <p className="text-red-500 text-xs mt-1">{validateInstitutionLevel(formData.institutionInformation.institutionLevel)}</p>
+                  )}
                 </div>
 
                 <div>
@@ -412,15 +703,22 @@ const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
                   </label>
                   <select
                     required
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    className={getSelectClasses(
+                      !!validateGender(formData.institutionInformation.gender),
+                      touched['gender']
+                    )}
                     value={formData.institutionInformation.gender}
                     onChange={(e) => handleInputChange('institutionInformation', 'gender', e.target.value)}
+                    onBlur={() => handleBlur('gender')}
                   >
                     <option value="">Seleccionar</option>
                     <option value="MIXTO">Mixto</option>
                     <option value="MASCULINO">Masculino</option>
                     <option value="FEMENINO">Femenino</option>
                   </select>
+                  {touched['gender'] && validateGender(formData.institutionInformation.gender) && (
+                    <p className="text-red-500 text-xs mt-1">{validateGender(formData.institutionInformation.gender)}</p>
+                  )}
                 </div>
 
                 <div>
@@ -429,11 +727,18 @@ const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
                   </label>
                   <input
                     type="text"
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    className={getInputClasses(
+                      !!validateSlogan(formData.institutionInformation.slogan),
+                      touched['slogan']
+                    )}
                     value={formData.institutionInformation.slogan}
                     onChange={(e) => handleInputChange('institutionInformation', 'slogan', e.target.value)}
+                    onBlur={() => handleBlur('slogan')}
                     placeholder="Ej: Educación con excelencia"
                   />
+                  {touched['slogan'] && validateSlogan(formData.institutionInformation.slogan) && (
+                    <p className="text-red-500 text-xs mt-1">{validateSlogan(formData.institutionInformation.slogan)}</p>
+                  )}
                 </div>
 
                 <div className="md:col-span-2">
@@ -442,11 +747,18 @@ const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
                   </label>
                   <input
                     type="url"
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    className={getInputClasses(
+                      !!validateLogoUrl(formData.institutionInformation.logoUrl),
+                      touched['logoUrl']
+                    )}
                     value={formData.institutionInformation.logoUrl}
                     onChange={(e) => handleInputChange('institutionInformation', 'logoUrl', e.target.value)}
+                    onBlur={() => handleBlur('logoUrl')}
                     placeholder="https://ejemplo.com/logo.png"
                   />
+                  {touched['logoUrl'] && validateLogoUrl(formData.institutionInformation.logoUrl) && (
+                    <p className="text-red-500 text-xs mt-1">{validateLogoUrl(formData.institutionInformation.logoUrl)}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -464,11 +776,21 @@ const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
                   </label>
                   <input
                     type="text"
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    className={getInputClasses(
+                      !!validateDepartment(formData.address.department),
+                      touched['department']
+                    )}
                     value={formData.address.department}
-                    onChange={(e) => handleInputChange('address', 'department', e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+                      handleInputChange('address', 'department', value);
+                    }}
+                    onBlur={() => handleBlur('department')}
                     placeholder="Ej: Lima"
                   />
+                  {touched['department'] && validateDepartment(formData.address.department) && (
+                    <p className="text-red-500 text-xs mt-1">{validateDepartment(formData.address.department)}</p>
+                  )}
                 </div>
 
                 <div>
@@ -477,11 +799,21 @@ const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
                   </label>
                   <input
                     type="text"
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    className={getInputClasses(
+                      !!validateProvince(formData.address.province),
+                      touched['province']
+                    )}
                     value={formData.address.province}
-                    onChange={(e) => handleInputChange('address', 'province', e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+                      handleInputChange('address', 'province', value);
+                    }}
+                    onBlur={() => handleBlur('province')}
                     placeholder="Ej: Lima"
                   />
+                  {touched['province'] && validateProvince(formData.address.province) && (
+                    <p className="text-red-500 text-xs mt-1">{validateProvince(formData.address.province)}</p>
+                  )}
                 </div>
 
                 <div>
@@ -490,11 +822,21 @@ const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
                   </label>
                   <input
                     type="text"
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    className={getInputClasses(
+                      !!validateDistrict(formData.address.district),
+                      touched['district']
+                    )}
                     value={formData.address.district}
-                    onChange={(e) => handleInputChange('address', 'district', e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+                      handleInputChange('address', 'district', value);
+                    }}
+                    onBlur={() => handleBlur('district')}
                     placeholder="Ej: Miraflores"
                   />
+                  {touched['district'] && validateDistrict(formData.address.district) && (
+                    <p className="text-red-500 text-xs mt-1">{validateDistrict(formData.address.district)}</p>
+                  )}
                 </div>
 
                 <div>
@@ -503,11 +845,21 @@ const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
                   </label>
                   <input
                     type="text"
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    className={getInputClasses(
+                      !!validatePostalCode(formData.address.postalCode),
+                      touched['postalCode']
+                    )}
                     value={formData.address.postalCode}
-                    onChange={(e) => handleInputChange('address', 'postalCode', e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '');
+                      handleInputChange('address', 'postalCode', value);
+                    }}
+                    onBlur={() => handleBlur('postalCode')}
                     placeholder="Ej: 15074"
                   />
+                  {touched['postalCode'] && validatePostalCode(formData.address.postalCode) && (
+                    <p className="text-red-500 text-xs mt-1">{validatePostalCode(formData.address.postalCode)}</p>
+                  )}
                 </div>
               </div>
 
@@ -517,59 +869,107 @@ const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
                 </label>
                 <input
                   type="text"
-                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  className={getInputClasses(
+                    !!validateStreet(formData.address.street),
+                    touched['street']
+                  )}
                   value={formData.address.street}
                   onChange={(e) => handleInputChange('address', 'street', e.target.value)}
+                  onBlur={() => handleBlur('street')}
                   placeholder="Ej: Av. Principal 123"
                 />
+                {touched['street'] && validateStreet(formData.address.street) && (
+                  <p className="text-red-500 text-xs mt-1">{validateStreet(formData.address.street)}</p>
+                )}
               </div>
 
               <h4 className="text-md font-semibold text-gray-800 mt-6">Métodos de Contacto</h4>
               
-              {formData.contactMethods.map((contact, index) => (
-                <div key={index} className="border p-4 rounded-md bg-gray-50">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium text-gray-700">Contacto {index + 1}</span>
-                    {formData.contactMethods.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeArrayItem('contactMethods', index)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        Eliminar
-                      </button>
-                    )}
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
-                      <select
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                        value={contact.type}
-                        onChange={(e) => handleArrayChange('contactMethods', index, 'type', e.target.value)}
-                      >
-                        <option value="">Seleccionar</option>
-                        <option value="TELEFONO">Teléfono</option>
-                        <option value="CELULAR">Celular</option>
-                        <option value="EMAIL">Email</option>
-                        <option value="WHATSAPP">WhatsApp</option>
-                      </select>
+              {formData.contactMethods.map((contact, index) => {
+                const typeError = validateContactMethodType(contact.type);
+                const valueError = validateContactMethodValue(contact.type, contact.value);
+                const typeTouched = touched[`contactType_${index}`];
+                const valueTouched = touched[`contactValue_${index}`];
+
+                const getPlaceholder = (type: string) => {
+                  switch (type) {
+                    case 'TELEFONO':
+                    case 'CELULAR':
+                    case 'WHATSAPP':
+                      return '999999999';
+                    case 'EMAIL':
+                      return 'ejemplo@correo.com';
+                    case 'WEBSITE':
+                      return 'https://ejemplo.com';
+                    default:
+                      return 'Ingrese valor';
+                  }
+                };
+
+                const handleContactValueChange = (value: string) => {
+                  // Si es teléfono, celular o whatsapp, solo permitir números y limitar a 9 dígitos
+                  if (contact.type === 'TELEFONO' || contact.type === 'CELULAR' || contact.type === 'WHATSAPP') {
+                    const cleanValue = value.replace(/\D/g, '').slice(0, 9);
+                    handleArrayChange('contactMethods', index, 'value', cleanValue);
+                  } else {
+                    handleArrayChange('contactMethods', index, 'value', value);
+                  }
+                };
+
+                return (
+                  <div key={index} className="border p-4 rounded-md bg-gray-50">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium text-gray-700">Contacto {index + 1}</span>
+                      {formData.contactMethods.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeArrayItem('contactMethods', index)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          Eliminar
+                        </button>
+                      )}
                     </div>
                     
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Valor</label>
-                      <input
-                        type="text"
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                        value={contact.value}
-                        onChange={(e) => handleArrayChange('contactMethods', index, 'value', e.target.value)}
-                        placeholder="Ej: 01-1234567"
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                        <select
+                          className={getSelectClasses(!!typeError, typeTouched)}
+                          value={contact.type}
+                          onChange={(e) => handleArrayChange('contactMethods', index, 'type', e.target.value)}
+                          onBlur={() => handleBlur(`contactType_${index}`)}
+                        >
+                          <option value="">Seleccionar</option>
+                          <option value="TELEFONO">Teléfono</option>
+                          <option value="CELULAR">Celular</option>
+                          <option value="EMAIL">Email</option>
+                          <option value="WHATSAPP">WhatsApp</option>
+                        </select>
+                        {typeTouched && typeError && (
+                          <p className="text-red-500 text-xs mt-1">{typeError}</p>
+                        )}
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Valor</label>
+                        <input
+                          type="text"
+                          className={getInputClasses(!!valueError, valueTouched)}
+                          value={contact.value}
+                          onChange={(e) => handleContactValueChange(e.target.value)}
+                          onBlur={() => handleBlur(`contactValue_${index}`)}
+                          placeholder={getPlaceholder(contact.type)}
+                          maxLength={contact.type === 'TELEFONO' || contact.type === 'CELULAR' || contact.type === 'WHATSAPP' ? 9 : undefined}
+                        />
+                        {valueTouched && valueError && (
+                          <p className="text-red-500 text-xs mt-1">{valueError}</p>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               
               <button
                 type="button"
@@ -1149,114 +1549,8 @@ const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
             </div>
           )}
 
-          {/* Step 5: Auxiliares */}
+          {/* Step 5: Configuración Final */}
           {currentStep === 5 && (
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <h4 className="text-md font-semibold text-gray-800">Personal Auxiliar</h4>
-                <span className="text-sm text-gray-500">(Opcional)</span>
-              </div>
-              
-              {formData.auxiliaries.map((auxiliary, index) => (
-                <div key={index} className="border p-4 rounded-md bg-gray-50">
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="text-sm font-medium text-gray-700">Auxiliar {index + 1}</span>
-                    {formData.auxiliaries.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeArrayItem('auxiliaries', index)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        Eliminar
-                      </button>
-                    )}
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Nombres</label>
-                      <input
-                        type="text"
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                        value={auxiliary.firstName}
-                        onChange={(e) => handleArrayChange('auxiliaries', index, 'firstName', e.target.value)}
-                        placeholder="Nombres del auxiliar"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Apellidos</label>
-                      <input
-                        type="text"
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                        value={auxiliary.lastName}
-                        onChange={(e) => handleArrayChange('auxiliaries', index, 'lastName', e.target.value)}
-                        placeholder="Apellidos del auxiliar"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Documento</label>
-                      <select
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                        value={auxiliary.documentType}
-                        onChange={(e) => handleArrayChange('auxiliaries', index, 'documentType', e.target.value)}
-                      >
-                        <option value="">Seleccionar</option>
-                        <option value="DNI">DNI</option>
-                        <option value="CARNET_EXTRANJERIA">Carnet de Extranjería</option>
-                        <option value="PASAPORTE">Pasaporte</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Número de Documento</label>
-                      <input
-                        type="text"
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                        value={auxiliary.documentNumber}
-                        onChange={(e) => handleArrayChange('auxiliaries', index, 'documentNumber', e.target.value)}
-                        placeholder="Número de documento"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
-                      <input
-                        type="tel"
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                        value={auxiliary.phone}
-                        onChange={(e) => handleArrayChange('auxiliaries', index, 'phone', e.target.value)}
-                        placeholder="Número de teléfono"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                      <input
-                        type="email"
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                        value={auxiliary.email}
-                        onChange={(e) => handleArrayChange('auxiliaries', index, 'email', e.target.value)}
-                        placeholder="email@ejemplo.com"
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-              
-              <button
-                type="button"
-                onClick={() => addArrayItem('auxiliaries')}
-                className="w-full py-2 px-4 border border-dashed border-gray-300 rounded-md text-sm text-gray-600 hover:border-gray-400 hover:text-gray-800"
-              >
-                + Agregar Auxiliar
-              </button>
-            </div>
-          )}
-
-          {/* Step 6: Configuración Final */}
-          {currentStep === 6 && (
             <div className="space-y-4">
               <h4 className="text-md font-semibold text-gray-800">Configuración Final</h4>
               
@@ -1295,11 +1589,12 @@ const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
                 <h5 className="font-semibold text-gray-800 mb-2">Resumen de la Institución</h5>
                 <div className="text-sm text-gray-600 space-y-1">
                   <p><strong>Nombre:</strong> {formData.institutionInformation.institutionName}</p>
+                  <p><strong>Código Institución:</strong> {formData.institutionInformation.codeInstitution}</p>
                   <p><strong>Código Modular:</strong> {formData.institutionInformation.modularCode}</p>
                   <p><strong>Tipo:</strong> {formData.institutionInformation.institutionType}</p>
                   <p><strong>Nivel:</strong> {formData.institutionInformation.institutionLevel}</p>
                   <p><strong>Director:</strong> {formData.director.firstName} {formData.director.lastName}</p>
-                  <p><strong>Auxiliares:</strong> {formData.auxiliaries.filter(aux => aux.firstName && aux.lastName).length}</p>
+                  <p><strong>Auxiliares:</strong> {institution.auxiliaries?.length || 0} (solo lectura)</p>
                   <p><strong>Ubicación:</strong> {formData.address.district}, {formData.address.province}, {formData.address.department}</p>
                 </div>
               </div>
@@ -1324,7 +1619,10 @@ const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
           <div className="flex justify-between pt-6 border-t">
             <button
               type="button"
-              onClick={() => setCurrentStep(prev => Math.max(1, prev - 1))}
+              onClick={() => {
+                setError(null);
+                setCurrentStep(prev => Math.max(1, prev - 1));
+              }}
               disabled={currentStep === 1}
               className={`px-4 py-2 rounded-md text-sm font-medium ${
                 currentStep === 1
@@ -1347,7 +1645,7 @@ const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
               {currentStep < steps.length ? (
                 <button
                   type="button"
-                  onClick={() => setCurrentStep(prev => Math.min(6, prev + 1))}
+                  onClick={handleNextStep}
                   className="px-4 py-2 rounded-md text-sm font-medium bg-blue-600 text-white hover:bg-blue-700"
                 >
                   Siguiente

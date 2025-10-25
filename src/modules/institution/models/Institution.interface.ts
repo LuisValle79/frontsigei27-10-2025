@@ -14,6 +14,7 @@ export interface Address {
 
 export interface InstitutionInformation {
   institutionName: string;
+  codeInstitution: string;
   modularCode: string;
   institutionType: string;
   institutionLevel: string;

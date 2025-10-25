@@ -2,6 +2,7 @@ export interface InstitutionFormData {
   // Información de la institución
   institutionInformation: {
     institutionName: string;
+    codeInstitution: string;
     modularCode: string;
     institutionType: string;
     institutionLevel: string;
