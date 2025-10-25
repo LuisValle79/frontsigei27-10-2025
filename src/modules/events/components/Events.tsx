@@ -2,36 +2,36 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import type { Evento, EventoCreateRequest } from "../models/events.model"
+import type { Event, EventCreateRequest } from "../models/events.model"
 import { TIPO_EVENTO, TIPO_EVENTO_LABELS } from "../models/events.model"
 import { EventsService } from "../service/Events.service"
 import { Plus, Edit2, Trash2, RotateCcw, X, Calendar, AlertCircle, CheckCircle, Eye } from "lucide-react"
 import Swal from "sweetalert2"
 
 export function Events() {
-  const [eventos, setEventos] = useState<Evento[]>([])
+  const [eventos, setEventos] = useState<Event[]>([])
   const [instituciones, setInstituciones] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [showInactivos, setShowInactivos] = useState(false)
-  const [editingEvento, setEditingEvento] = useState<Evento | null>(null)
+  const [editingEvento, setEditingEvento] = useState<Event | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [filterTipo, setFilterTipo] = useState<string>("")
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
-  const [detailsEvento, setDetailsEvento] = useState<Evento | null>(null)
+  const [detailsEvento, setDetailsEvento] = useState<Event | null>(null)
 
-  const [formData, setFormData] = useState<EventoCreateRequest>({
-    idInstitucion: "",
-    titulo: "",
-    descripcion: "",
-    fechaInicio: "",
-    fechaFin: null,
-    tipoEvento: TIPO_EVENTO.ACADEMICO,
-    esFeriado: false,
-    recurrente: false,
-    esNacional: false,
-    afectaClases: false,
-    creadoPor: "admin",
+  const [formData, setFormData] = useState<EventCreateRequest>({
+    institutionId: "",
+    title: "",
+    description: "",
+    startDate: "",
+    endDate: null,
+    eventType: TIPO_EVENTO.ACADEMICO,
+    isHoliday: false,
+    isRecurring: false,
+    isNational: false,
+    affectsClasses: false,
+    createdBy: "admin",
   })
 
   useEffect(() => {
@@ -43,8 +43,8 @@ export function Events() {
       setLoading(true)
       const isInactive = inactivos !== undefined ? inactivos : showInactivos
       const [eventosData, institucionesData] = await Promise.all([
-        isInactive ? EventsService.listarEventosInactivos() : EventsService.listarEventosActivos(),
-        EventsService.obtenerInstitucionesPrueba(),
+        isInactive ? EventsService.listInactiveEvents() : EventsService.listActiveEvents(),
+        EventsService.getTestInstitutions(),
       ])
       setEventos(eventosData)
       setInstituciones(institucionesData)
@@ -58,55 +58,55 @@ export function Events() {
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {}
 
-    if (!formData.idInstitucion.trim()) {
-      errors.idInstitucion = "La institución es requerida"
+    if (!formData.institutionId.trim()) {
+      errors.institutionId = "La institución es requerida"
     }
-    if (!formData.titulo.trim()) {
-      errors.titulo = "El título es requerido"
-    } else if (formData.titulo.length < 3) {
-      errors.titulo = "El título debe tener al menos 3 caracteres"
+    if (!formData.title.trim()) {
+      errors.title = "El título es requerido"
+    } else if (formData.title.length < 3) {
+      errors.title = "El título debe tener al menos 3 caracteres"
     }
-    if (!formData.descripcion.trim()) {
-      errors.descripcion = "La descripción es requerida"
-    } else if (formData.descripcion.length < 10) {
-      errors.descripcion = "La descripción debe tener al menos 10 caracteres"
+    if (!formData.description.trim()) {
+      errors.description = "La descripción es requerida"
+    } else if (formData.description.length < 10) {
+      errors.description = "La descripción debe tener al menos 10 caracteres"
     }
-    if (!formData.fechaInicio) {
-      errors.fechaInicio = "La fecha de inicio es requerida"
+    if (!formData.startDate) {
+      errors.startDate = "La fecha de inicio es requerida"
     }
-    if (formData.fechaFin && new Date(formData.fechaFin) < new Date(formData.fechaInicio)) {
-      errors.fechaFin = "La fecha de fin debe ser posterior a la fecha de inicio"
+    if (formData.endDate && new Date(formData.endDate) < new Date(formData.startDate)) {
+      errors.endDate = "La fecha de fin debe ser posterior a la fecha de inicio"
     }
 
     setValidationErrors(errors)
     return Object.keys(errors).length === 0
   }
 
-  const showEventPreview = (evento: EventoCreateRequest) => {
+  const showEventPreview = (evento: EventCreateRequest) => {
     const attributes = []
-    if (evento.esFeriado) attributes.push("🎉 Feriado")
-    if (evento.recurrente) attributes.push("🔄 Recurrente")
-    if (evento.esNacional) attributes.push("🇵🇪 Nacional")
-    if (evento.afectaClases) attributes.push("⚠️ Afecta Clases")
+    if (evento.isHoliday) attributes.push("🎉 Feriado")
+    if (evento.isRecurring) attributes.push("🔄 Recurrente")
+    if (evento.isNational) attributes.push("🇵🇪 Nacional")
+    if (evento.affectsClasses) attributes.push("⚠️ Afecta Clases")
 
     const previewHTML = `
       <div style="text-align: left; padding: 20px; background: #f8f9fa; border-radius: 12px;">
         <div style="margin-bottom: 16px;">
           <p style="font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 6px 0; font-weight: 600;">Título</p>
-          <p style="margin: 0; color: #333; font-weight: 500; font-size: 14px;">${evento.titulo}</p>
+          <p style="margin: 0; color: #333; font-weight: 500; font-size: 14px;">${evento.title}</p>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
           <div>
             <p style="font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 6px 0; font-weight: 600;">Fecha Inicio</p>
-            <p style="margin: 0; color: #333; font-weight: 500; font-size: 14px;">${new Date(evento.fechaInicio).toLocaleDateString("es-PE")}</p>
+            <p style="margin: 0; color: #333; font-weight: 500; font-size: 14px;">${new Date(evento.startDate).toLocaleDateString("es-PE")}</p>
           </div>
           ${
-            evento.fechaFin
+            evento.endDate
               ? `
             <div>
               <p style="font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 6px 0; font-weight: 600;">Fecha Fin</p>
-              <p style="margin: 0; color: #333; font-weight: 500; font-size: 14px;">${new Date(evento.fechaFin).toLocaleDateString("es-PE")}</p>
+              <p style="margin: 0; color: #333; font-weight: 500; font-size: 14px;">${new Date(evento.endDate).toLocaleDateString("es-PE")}</p>
             </div>
           `
               : ""
@@ -115,12 +115,12 @@ export function Events() {
 
         <div style="margin-bottom: 16px;">
           <p style="font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 6px 0; font-weight: 600;">Descripción</p>
-          <p style="margin: 0; color: #555; font-size: 13px; line-height: 1.5;">${evento.descripcion}</p>
+          <p style="margin: 0; color: #555; font-size: 13px; line-height: 1.5;">${evento.description}</p>
         </div>
 
         <div style="margin-bottom: 16px;">
           <p style="font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 6px 0; font-weight: 600;">Tipo de Evento</p>
-          <p style="margin: 0; color: #333; font-weight: 500; font-size: 14px;">${TIPO_EVENTO_LABELS[evento.tipoEvento]?.label}</p>
+          <p style="margin: 0; color: #333; font-weight: 500; font-size: 14px;">${TIPO_EVENTO_LABELS[evento.eventType]?.label}</p>
         </div>
 
         ${
@@ -177,9 +177,9 @@ export function Events() {
 
     try {
       if (editingEvento) {
-        await EventsService.editarEvento(editingEvento.idEvento, formData)
+        await EventsService.updateEvent(editingEvento.eventId, formData)
       } else {
-        await EventsService.crearEvento(formData)
+        await EventsService.createEvent(formData)
       }
       setShowModal(false)
       resetForm()
@@ -212,26 +212,26 @@ export function Events() {
     }
   }
 
-  const handleEdit = (evento: Evento) => {
+  const handleEdit = (evento: Event) => {
     setEditingEvento(evento)
     setFormData({
-      idInstitucion: evento.idInstitucion,
-      titulo: evento.titulo,
-      descripcion: evento.descripcion,
-      fechaInicio: evento.fechaInicio,
-      fechaFin: evento.fechaFin,
-      tipoEvento: evento.tipoEvento,
-      esFeriado: evento.esFeriado,
-      recurrente: evento.recurrente,
-      esNacional: evento.esNacional,
-      afectaClases: evento.afectaClases,
-      creadoPor: evento.creadoPor,
+      institutionId: evento.institutionId,
+      title: evento.title,
+      description: evento.description,
+      startDate: evento.startDate,
+      endDate: evento.endDate,
+      eventType: evento.eventType,
+      isHoliday: evento.isHoliday,
+      isRecurring: evento.isRecurring,
+      isNational: evento.isNational,
+      affectsClasses: evento.affectsClasses,
+      createdBy: evento.createdBy,
     })
     setValidationErrors({})
     setShowModal(true)
   }
 
-  const handleDelete = async (evento: Evento) => {
+  const handleDelete = async (evento: Event) => {
     const previewHTML = showEventPreview(evento)
 
     const result = await Swal.fire({
@@ -263,7 +263,7 @@ export function Events() {
     if (!result.isConfirmed) return
 
     try {
-      await EventsService.eliminarEvento(evento.idEvento)
+      await EventsService.logicalDeleteEvent(evento.eventId)
       cargarDatos()
 
       Swal.fire({
@@ -293,7 +293,7 @@ export function Events() {
     }
   }
 
-  const handleRestore = async (evento: Evento) => {
+  const handleRestore = async (evento: Event) => {
     const previewHTML = showEventPreview(evento)
 
     const result = await Swal.fire({
@@ -325,7 +325,7 @@ export function Events() {
     if (!result.isConfirmed) return
 
     try {
-      await EventsService.restaurarEvento(evento.idEvento)
+      await EventsService.restoreEvent(evento.eventId)
       await cargarDatos(false)
 
       Swal.fire({
@@ -359,25 +359,25 @@ export function Events() {
     setEditingEvento(null)
     setValidationErrors({})
     setFormData({
-      idInstitucion: "",
-      titulo: "",
-      descripcion: "",
-      fechaInicio: "",
-      fechaFin: null,
-      tipoEvento: TIPO_EVENTO.ACADEMICO,
-      esFeriado: false,
-      recurrente: false,
-      esNacional: false,
-      afectaClases: false,
-      creadoPor: "admin",
+      institutionId: "",
+      title: "",
+      description: "",
+      startDate: "",
+      endDate: null,
+      eventType: TIPO_EVENTO.ACADEMICO,
+      isHoliday: false,
+      isRecurring: false,
+      isNational: false,
+      affectsClasses: false,
+      createdBy: "admin",
     })
   }
 
   const eventosFiltrados = eventos.filter(
     (evento) =>
-      (evento.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        evento.descripcion.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (!filterTipo || evento.tipoEvento === filterTipo),
+      (evento.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        evento.description.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (!filterTipo || evento.eventType === filterTipo),
   )
 
   const getEventIcon = (tipoEvento: string) => {
@@ -498,23 +498,23 @@ export function Events() {
                   <tbody className="divide-y divide-gray-200">
                     {eventosFiltrados.map((evento, index) => (
                       <tr
-                        key={evento.idEvento}
+                        key={evento.eventId}
                         className={`hover:bg-gray-50 transition-colors ${index % 2 === 0 ? "bg-white" : "bg-gray-50"}`}
                       >
                         <td className="px-4 md:px-6 py-3 md:py-4">
                           <span
-                            className={`inline-flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1 rounded-full text-xs md:text-sm font-medium ${getEventColor(evento.tipoEvento)}`}
+                            className={`inline-flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1 rounded-full text-xs md:text-sm font-medium ${getEventColor(evento.eventType)}`}
                           >
-                            <span>{getEventIcon(evento.tipoEvento)}</span>
-                            <span className="hidden sm:inline">{TIPO_EVENTO_LABELS[evento.tipoEvento]?.label}</span>
+                            <span>{getEventIcon(evento.eventType)}</span>
+                            <span className="hidden sm:inline">{TIPO_EVENTO_LABELS[evento.eventType]?.label}</span>
                           </span>
                         </td>
                         <td className="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm font-medium text-gray-900">
-                          {evento.titulo}
+                          {evento.title}
                         </td>
                         <td className="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm text-gray-600 whitespace-nowrap">
-                          {new Date(evento.fechaInicio).toLocaleDateString("es-PE")}
-                          {isEventoProximo(evento.fechaInicio) && (
+                          {new Date(evento.startDate).toLocaleDateString("es-PE")}
+                          {isEventoProximo(evento.startDate) && (
                             <span className="ml-2 inline-block bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-1 rounded-full">
                               Próximo
                             </span>
@@ -523,10 +523,10 @@ export function Events() {
                         <td className="px-4 md:px-6 py-3 md:py-4">
                           <span
                             className={`inline-flex items-center gap-1 text-xs md:text-sm font-medium px-2 md:px-3 py-1 rounded-full ${
-                              evento.estado === "A" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                              evento.status === "ACTIVE" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
                             }`}
                           >
-                            {evento.estado === "A" ? (
+                            {evento.status === "ACTIVE" ? (
                               <>
                                 <CheckCircle size={14} />
                                 <span className="hidden sm:inline">Activo</span>
@@ -548,7 +548,7 @@ export function Events() {
                             >
                               <Eye size={16} className="md:w-5 md:h-5" />
                             </button>
-                            {evento.estado === "A" ? (
+                            {evento.status === "ACTIVE" ? (
                               <>
                                 <button
                                   onClick={() => handleEdit(evento)}
@@ -606,10 +606,10 @@ export function Events() {
                 <label className="block text-xs md:text-sm font-semibold text-gray-600 mb-2">Tipo de Evento</label>
                 <div className="flex items-center gap-2">
                   <span
-                    className={`inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium ${getEventColor(detailsEvento.tipoEvento)}`}
+                    className={`inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium ${getEventColor(detailsEvento.eventType)}`}
                   >
-                    <span>{getEventIcon(detailsEvento.tipoEvento)}</span>
-                    {TIPO_EVENTO_LABELS[detailsEvento.tipoEvento]?.label}
+                    <span>{getEventIcon(detailsEvento.eventType)}</span>
+                    {TIPO_EVENTO_LABELS[detailsEvento.eventType]?.label}
                   </span>
                 </div>
               </div>
@@ -617,13 +617,13 @@ export function Events() {
               {/* Title */}
               <div>
                 <label className="block text-xs md:text-sm font-semibold text-gray-600 mb-2">Título</label>
-                <p className="text-sm md:text-base text-gray-900">{detailsEvento.titulo}</p>
+                <p className="text-sm md:text-base text-gray-900">{detailsEvento.title}</p>
               </div>
 
               {/* Description */}
               <div>
                 <label className="block text-xs md:text-sm font-semibold text-gray-600 mb-2">Descripción</label>
-                <p className="text-sm md:text-base text-gray-700 leading-relaxed">{detailsEvento.descripcion}</p>
+                <p className="text-sm md:text-base text-gray-700 leading-relaxed">{detailsEvento.description}</p>
               </div>
 
               {/* Dates */}
@@ -631,13 +631,13 @@ export function Events() {
                 <div>
                   <label className="block text-xs md:text-sm font-semibold text-gray-600 mb-2">Fecha Inicio</label>
                   <p className="text-sm md:text-base text-gray-900">
-                    {new Date(detailsEvento.fechaInicio).toLocaleDateString("es-PE")}
+                    {new Date(detailsEvento.startDate).toLocaleDateString("es-PE")}
                   </p>
                 </div>
                 <div>
                   <label className="block text-xs md:text-sm font-semibold text-gray-600 mb-2">Fecha Fin</label>
                   <p className="text-sm md:text-base text-gray-900">
-                    {detailsEvento.fechaFin ? new Date(detailsEvento.fechaFin).toLocaleDateString("es-PE") : "-"}
+                    {detailsEvento.endDate ? new Date(detailsEvento.endDate).toLocaleDateString("es-PE") : "-"}
                   </p>
                 </div>
               </div>
@@ -646,30 +646,30 @@ export function Events() {
               <div>
                 <label className="block text-xs md:text-sm font-semibold text-gray-600 mb-3">Atributos</label>
                 <div className="flex flex-wrap gap-2">
-                  {detailsEvento.esFeriado && (
+                  {detailsEvento.isHoliday && (
                     <span className="inline-flex items-center gap-1 text-xs font-medium bg-purple-100 text-purple-800 px-3 py-1 rounded-full">
                       🎉 Feriado
                     </span>
                   )}
-                  {detailsEvento.recurrente && (
+                  {detailsEvento.isRecurring && (
                     <span className="inline-flex items-center gap-1 text-xs font-medium bg-orange-100 text-orange-800 px-3 py-1 rounded-full">
                       🔄 Recurrente
                     </span>
                   )}
-                  {detailsEvento.esNacional && (
+                  {detailsEvento.isNational && (
                     <span className="inline-flex items-center gap-1 text-xs font-medium bg-red-100 text-red-800 px-3 py-1 rounded-full">
                       🇵🇪 Nacional
                     </span>
                   )}
-                  {detailsEvento.afectaClases && (
+                  {detailsEvento.affectsClasses && (
                     <span className="inline-flex items-center gap-1 text-xs font-medium bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full">
                       ⚠️ Afecta Clases
                     </span>
                   )}
-                  {!detailsEvento.esFeriado &&
-                    !detailsEvento.recurrente &&
-                    !detailsEvento.esNacional &&
-                    !detailsEvento.afectaClases && (
+                  {!detailsEvento.isHoliday &&
+                    !detailsEvento.isRecurring &&
+                    !detailsEvento.isNational &&
+                    !detailsEvento.affectsClasses && (
                       <span className="text-xs text-gray-500">Sin atributos especiales</span>
                     )}
                 </div>
@@ -680,10 +680,10 @@ export function Events() {
                 <label className="block text-xs md:text-sm font-semibold text-gray-600 mb-2">Estado</label>
                 <span
                   className={`inline-flex items-center gap-2 text-xs md:text-sm font-medium px-3 py-2 rounded-full ${
-                    detailsEvento.estado === "A" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                    detailsEvento.status === "ACTIVE" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
                   }`}
                 >
-                  {detailsEvento.estado === "A" ? (
+                  {detailsEvento.status === "ACTIVE" ? (
                     <>
                       <CheckCircle size={16} /> Activo
                     </>
@@ -698,7 +698,7 @@ export function Events() {
               {/* Institution */}
               <div>
                 <label className="block text-xs md:text-sm font-semibold text-gray-600 mb-2">Institución</label>
-                <p className="text-sm md:text-base text-gray-900">{detailsEvento.idInstitucion}</p>
+                <p className="text-sm md:text-base text-gray-900">{detailsEvento.institutionId}</p>
               </div>
 
               {/* Close Button */}
@@ -740,10 +740,10 @@ export function Events() {
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Institución *</label>
                   <select
-                    value={formData.idInstitucion}
-                    onChange={(e) => setFormData({ ...formData, idInstitucion: e.target.value })}
+                    value={formData.institutionId}
+                    onChange={(e) => setFormData({ ...formData, institutionId: e.target.value })}
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm ${
-                      validationErrors.idInstitucion ? "border-red-500" : "border-gray-300"
+                      validationErrors.institutionId ? "border-red-500" : "border-gray-300"
                     }`}
                   >
                     <option value="">Seleccione una institución</option>
@@ -753,8 +753,8 @@ export function Events() {
                       </option>
                     ))}
                   </select>
-                  {validationErrors.idInstitucion && (
-                    <p className="text-red-500 text-sm mt-1">{validationErrors.idInstitucion}</p>
+                  {validationErrors.institutionId && (
+                    <p className="text-red-500 text-sm mt-1">{validationErrors.institutionId}</p>
                   )}
                 </div>
 
@@ -763,30 +763,30 @@ export function Events() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Título *</label>
                   <input
                     type="text"
-                    value={formData.titulo}
-                    onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm ${
-                      validationErrors.titulo ? "border-red-500" : "border-gray-300"
+                      validationErrors.title ? "border-red-500" : "border-gray-300"
                     }`}
                     placeholder="Ej: Día del Niño"
                   />
-                  {validationErrors.titulo && <p className="text-red-500 text-sm mt-1">{validationErrors.titulo}</p>}
+                  {validationErrors.title && <p className="text-red-500 text-sm mt-1">{validationErrors.title}</p>}
                 </div>
 
                 {/* Description */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Descripción *</label>
                   <textarea
-                    value={formData.descripcion}
-                    onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={3}
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm ${
-                      validationErrors.descripcion ? "border-red-500" : "border-gray-300"
+                      validationErrors.description ? "border-red-500" : "border-gray-300"
                     }`}
                     placeholder="Describe el evento..."
                   />
-                  {validationErrors.descripcion && (
-                    <p className="text-red-500 text-sm mt-1">{validationErrors.descripcion}</p>
+                  {validationErrors.description && (
+                    <p className="text-red-500 text-sm mt-1">{validationErrors.description}</p>
                   )}
                 </div>
 
@@ -795,14 +795,14 @@ export function Events() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Inicio *</label>
                   <input
                     type="date"
-                    value={formData.fechaInicio}
-                    onChange={(e) => setFormData({ ...formData, fechaInicio: e.target.value })}
+                    value={formData.startDate}
+                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm ${
-                      validationErrors.fechaInicio ? "border-red-500" : "border-gray-300"
+                      validationErrors.startDate ? "border-red-500" : "border-gray-300"
                     }`}
                   />
-                  {validationErrors.fechaInicio && (
-                    <p className="text-red-500 text-sm mt-1">{validationErrors.fechaInicio}</p>
+                  {validationErrors.startDate && (
+                    <p className="text-red-500 text-sm mt-1">{validationErrors.startDate}</p>
                   )}
                 </div>
 
@@ -811,23 +811,21 @@ export function Events() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Fin (Opcional)</label>
                   <input
                     type="date"
-                    value={formData.fechaFin || ""}
-                    onChange={(e) => setFormData({ ...formData, fechaFin: e.target.value || null })}
+                    value={formData.endDate || ""}
+                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value || null })}
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm ${
-                      validationErrors.fechaFin ? "border-red-500" : "border-gray-300"
+                      validationErrors.endDate ? "border-red-500" : "border-gray-300"
                     }`}
                   />
-                  {validationErrors.fechaFin && (
-                    <p className="text-red-500 text-sm mt-1">{validationErrors.fechaFin}</p>
-                  )}
+                  {validationErrors.endDate && <p className="text-red-500 text-sm mt-1">{validationErrors.endDate}</p>}
                 </div>
 
                 {/* Event Type */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Evento *</label>
                   <select
-                    value={formData.tipoEvento}
-                    onChange={(e) => setFormData({ ...formData, tipoEvento: e.target.value })}
+                    value={formData.eventType}
+                    onChange={(e) => setFormData({ ...formData, eventType: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"
                   >
                     {Object.entries(TIPO_EVENTO).map(([key, value]) => (
@@ -843,8 +841,8 @@ export function Events() {
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={formData.esFeriado}
-                      onChange={(e) => setFormData({ ...formData, esFeriado: e.target.checked })}
+                      checked={formData.isHoliday}
+                      onChange={(e) => setFormData({ ...formData, isHoliday: e.target.checked })}
                       className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                     />
                     <span className="text-sm font-medium text-gray-700">Es Feriado</span>
@@ -853,8 +851,8 @@ export function Events() {
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={formData.recurrente}
-                      onChange={(e) => setFormData({ ...formData, recurrente: e.target.checked })}
+                      checked={formData.isRecurring}
+                      onChange={(e) => setFormData({ ...formData, isRecurring: e.target.checked })}
                       className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                     />
                     <span className="text-sm font-medium text-gray-700">Recurrente</span>
@@ -863,8 +861,8 @@ export function Events() {
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={formData.esNacional}
-                      onChange={(e) => setFormData({ ...formData, esNacional: e.target.checked })}
+                      checked={formData.isNational}
+                      onChange={(e) => setFormData({ ...formData, isNational: e.target.checked })}
                       className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                     />
                     <span className="text-sm font-medium text-gray-700">Es Nacional</span>
@@ -873,8 +871,8 @@ export function Events() {
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={formData.afectaClases}
-                      onChange={(e) => setFormData({ ...formData, afectaClases: e.target.checked })}
+                      checked={formData.affectsClasses}
+                      onChange={(e) => setFormData({ ...formData, affectsClasses: e.target.checked })}
                       className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                     />
                     <span className="text-sm font-medium text-gray-700">Afecta Clases</span>

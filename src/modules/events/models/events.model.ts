@@ -1,37 +1,37 @@
 /**
- * Modelos y tipos para el módulo de Eventos
+ * Models and types for the Events module
  */
 
-export interface Evento {
-  idEvento: number
-  idInstitucion: string
-  titulo: string
-  descripcion: string
-  fechaInicio: string
-  fechaFin: string | null
-  tipoEvento: string
-  esFeriado: boolean
-  recurrente: boolean
-  esNacional: boolean
-  estado: "A" | "I"
-  afectaClases: boolean
-  creadoPor: string
-  creadoEn: string
-  actualizadoEn: string
+export interface Event {
+  eventId: number;
+  institutionId: string;
+  title: string;
+  description: string;
+  startDate: string;
+  endDate: string | null;
+  eventType: string;
+  isHoliday: boolean;
+  isRecurring: boolean;
+  isNational: boolean;
+  status: "ACTIVE" | "INACTIVE";
+  affectsClasses: boolean;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface EventoCreateRequest {
-  idInstitucion: string
-  titulo: string
-  descripcion: string
-  fechaInicio: string
-  fechaFin: string | null
-  tipoEvento: string
-  esFeriado: boolean
-  recurrente: boolean
-  esNacional: boolean
-  afectaClases: boolean
-  creadoPor: string
+export interface EventCreateRequest {
+  institutionId: string;
+  title: string;
+  description: string;
+  startDate: string;
+  endDate: string | null;
+  eventType: string;
+  isHoliday: boolean;
+  isRecurring: boolean;
+  isNational: boolean;
+  affectsClasses: boolean;
+  createdBy: string;
 }
 
 export const TIPO_EVENTO = {
@@ -44,6 +44,7 @@ export const TIPO_EVENTO = {
   INCIDENTE: "INCIDENTE",
 } as const
 
+
 export const TIPO_EVENTO_LABELS: Record<string, { label: string; color: string; icon: string }> = {
   ACADEMICO: { label: "Académico", color: "bg-blue-100 text-blue-800", icon: "📚" },
   CULTURAL: { label: "Cultural", color: "bg-pink-100 text-pink-800", icon: "🎭" },
@@ -53,3 +54,4 @@ export const TIPO_EVENTO_LABELS: Record<string, { label: string; color: string; 
   CEREMONIAL: { label: "Ceremonial", color: "bg-red-100 text-red-800", icon: "🏛️" },
   INCIDENTE: { label: "Incidente", color: "bg-red-200 text-red-900", icon: "⚠️" },
 }
+

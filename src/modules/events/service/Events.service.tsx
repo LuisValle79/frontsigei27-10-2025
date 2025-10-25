@@ -1,71 +1,70 @@
-import type { Evento, EventoCreateRequest } from "../models/events.model"
+import type { Event, EventCreateRequest } from "../models/events.model"
 
-const API_BASE_URL = "http://localhost:8080/api/eventos"
+const API_BASE_URL = "http://localhost:8080/api/v1/events"
 
 export class EventsService {
-  static async listarEventosActivos(): Promise<Evento[]> {
+  static async listActiveEvents(): Promise<Event[]> {
     const response = await fetch(`${API_BASE_URL}`)
-    if (!response.ok) throw new Error("Error al listar eventos activos")
+    if (!response.ok) throw new Error("Error fetching active events")
     return response.json()
   }
 
-  static async listarEventosInactivos(): Promise<Evento[]> {
-    const response = await fetch(`${API_BASE_URL}/inactivos`)
-    if (!response.ok) throw new Error("Error al listar eventos inactivos")
+  static async listInactiveEvents(): Promise<Event[]> {
+    const response = await fetch(`${API_BASE_URL}/inactive`)
+    if (!response.ok) throw new Error("Error fetching inactive events")
     return response.json()
   }
 
-  static async obtenerEventoPorId(id: number): Promise<Evento> {
+  static async getEventById(id: number): Promise<Event> {
     const response = await fetch(`${API_BASE_URL}/${id}`)
-    if (!response.ok) throw new Error("Error al obtener evento")
+    if (!response.ok) throw new Error("Error fetching event by ID")
     return response.json()
   }
 
-  static async crearEvento(evento: EventoCreateRequest): Promise<Evento> {
+  static async createEvent(event: EventCreateRequest): Promise<Event> {
     const response = await fetch(`${API_BASE_URL}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(evento),
+      body: JSON.stringify(event),
     })
-    if (!response.ok) throw new Error("Error al crear evento")
+    if (!response.ok) throw new Error("Error creating event")
     return response.json()
   }
 
-  static async editarEvento(id: number, evento: EventoCreateRequest): Promise<Evento> {
+  static async updateEvent(id: number, event: EventCreateRequest): Promise<Event> {
     const response = await fetch(`${API_BASE_URL}/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(evento),
+      body: JSON.stringify(event),
     })
-    if (!response.ok) throw new Error("Error al editar evento")
+    if (!response.ok) throw new Error("Error updating event")
     return response.json()
   }
 
-  static async eliminarEvento(id: number): Promise<void> {
+  static async logicalDeleteEvent(id: number): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/${id}`, {
       method: "DELETE",
     })
-    if (!response.ok) throw new Error("Error al eliminar evento")
+    if (!response.ok) throw new Error("Error deleting event")
   }
 
-  static async restaurarEvento(id: number): Promise<Evento> {
-    const response = await fetch(`${API_BASE_URL}/${id}/restaurar`, {
+  static async restoreEvent(id: number): Promise<Event> {
+    const response = await fetch(`${API_BASE_URL}/${id}/restore`, {
       method: "PATCH",
     })
-    if (!response.ok) throw new Error("Error al restaurar evento")
+    if (!response.ok) throw new Error("Error restoring event")
     try {
       return await response.json()
     } catch {
-      // If response is not JSON, return empty object - the restore was successful
-      return {} as Evento
+      return {} as Event // Si no devuelve JSON, el restore fue exitoso
     }
   }
 
-  static async obtenerInstitucionesPrueba(): Promise<string[]> {
-    const response = await fetch(`${API_BASE_URL}/instituciones-prueba`)
-    if (!response.ok) throw new Error("Error al obtener instituciones")
+  static async getTestInstitutions(): Promise<string[]> {
+    const response = await fetch(`${API_BASE_URL}/test-institutions`)
+    if (!response.ok) throw new Error("Error fetching test institutions")
     return response.json()
   }
 }
 
-export type { Evento, EventoCreateRequest }
+export type { Event, EventCreateRequest }
