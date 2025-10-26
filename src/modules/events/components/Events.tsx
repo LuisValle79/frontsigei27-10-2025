@@ -232,66 +232,70 @@ export function Events() {
   }
 
   const handleDelete = async (evento: Event) => {
-    const previewHTML = showEventPreview(evento)
+  const previewHTML = showEventPreview(evento)
 
-    const result = await Swal.fire({
-      title: "¿Eliminar Evento?",
-      html: `
-        <div style="text-align: left;">
-          <p style="margin-bottom: 15px; color: #666;">
-            ¿Estás seguro de eliminar este evento?
-          </p>
-          ${previewHTML}
-        </div>
-      `,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#ef4444",
-      cancelButtonColor: "#6b7280",
-      confirmButtonText: "Eliminar",
-      cancelButtonText: "Cancelar",
-      backdrop: true,
+  const result = await Swal.fire({
+    title: "¿Eliminar Evento?",
+    html: `
+      <div style="text-align: left;">
+        <p style="margin-bottom: 15px; color: #666;">
+          ¿Estás seguro de eliminar este evento?
+        </p>
+        ${previewHTML}
+      </div>
+    `,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#ef4444",
+    cancelButtonColor: "#6b7280",
+    confirmButtonText: "Eliminar",
+    cancelButtonText: "Cancelar",
+    backdrop: true,
+    customClass: {
+      popup: "swal-popup",
+      title: "swal-title",
+      htmlContainer: "swal-html",
+      confirmButton: "swal-confirm-btn",
+      cancelButton: "swal-cancel-btn",
+    },
+  })
+
+  if (!result.isConfirmed) return
+
+  try {
+    // 👇 Aquí agregas el console.log solicitado
+    console.log("🟠 ID del evento a eliminar:", evento.eventId)
+
+    await EventsService.logicalDeleteEvent(evento.eventId)
+    cargarDatos()
+
+    Swal.fire({
+      title: "¡Eliminado!",
+      text: "Evento eliminado correctamente",
+      icon: "success",
+      confirmButtonColor: "#3b82f6",
       customClass: {
         popup: "swal-popup",
         title: "swal-title",
-        htmlContainer: "swal-html",
         confirmButton: "swal-confirm-btn",
-        cancelButton: "swal-cancel-btn",
       },
     })
-
-    if (!result.isConfirmed) return
-
-    try {
-      await EventsService.logicalDeleteEvent(evento.eventId)
-      cargarDatos()
-
-      Swal.fire({
-        title: "¡Eliminado!",
-        text: "Evento eliminado correctamente",
-        icon: "success",
-        confirmButtonColor: "#3b82f6",
-        customClass: {
-          popup: "swal-popup",
-          title: "swal-title",
-          confirmButton: "swal-confirm-btn",
-        },
-      })
-    } catch (error) {
-      console.error("Error al eliminar evento:", error)
-      Swal.fire({
-        title: "Error",
-        text: "Hubo un error al eliminar el evento",
-        icon: "error",
-        confirmButtonColor: "#ef4444",
-        customClass: {
-          popup: "swal-popup",
-          title: "swal-title",
-          confirmButton: "swal-confirm-btn",
-        },
-      })
-    }
+  } catch (error) {
+    console.error("Error al eliminar evento:", error)
+    Swal.fire({
+      title: "Error",
+      text: "Hubo un error al eliminar el evento",
+      icon: "error",
+      confirmButtonColor: "#ef4444",
+      customClass: {
+        popup: "swal-popup",
+        title: "swal-title",
+        confirmButton: "swal-confirm-btn",
+      },
+    })
   }
+}
+
 
   const handleRestore = async (evento: Event) => {
     const previewHTML = showEventPreview(evento)
