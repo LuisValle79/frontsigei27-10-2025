@@ -13,13 +13,17 @@ import {
      Brain,
      UserCircle,
      UserPlus,
+     ChevronDown,
+     ChevronRight,
 } from "lucide-react";
+import { useState } from "react";
 
 interface MenuItem {
      id: string;
      label: string;
      icon: React.ReactNode;
      path: string;
+     children?: MenuItem[];
 }
 
 const menuItems: MenuItem[] = [
@@ -88,11 +92,44 @@ const menuItems: MenuItem[] = [
           label: "Psicología",
           icon: <Brain size={20} />,
           path: "/psicologia",
+          children: [
+               {
+                    id: "psychology-evaluations",
+                    label: "Evaluaciones",
+                    icon: <Brain size={16} />,
+                    path: "/psicologia",
+               },
+               {
+                    id: "psychology-support",
+                    label: "Área de Soporte Especial",
+                    icon: <Brain size={16} />,
+                    path: "/psychology/supports",
+               },
+          ],
      },
 ];
 
 export function Sidebar() {
      const location = useLocation();
+     const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
+
+     const toggleMenu = (menuId: string) => {
+          setOpenMenus(prev => ({
+               ...prev,
+               [menuId]: !prev[menuId]
+          }));
+     };
+
+     const isMenuOpen = (menuId: string) => {
+          return openMenus[menuId] || false;
+     };
+
+     const isMenuItemActive = (item: MenuItem) => {
+          if (item.children) {
+               return item.children.some(child => location.pathname === child.path);
+          }
+          return location.pathname === item.path;
+     };
 
      return (
           <aside className="w-64 min-h-screen bg-slate-900 text-white flex flex-col">
@@ -122,23 +159,73 @@ export function Sidebar() {
 
                     <ul className="space-y-1">
                          {menuItems.map((item) => {
-                              const isActive = location.pathname === item.path;
+                              const isActive = isMenuItemActive(item);
+                              const hasChildren = item.children && item.children.length > 0;
 
                               return (
                                    <li key={item.id}>
-                                        <Link
-                                             to={item.path}
-                                             className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                                                  isActive
-                                                       ? "bg-blue-600 text-white"
-                                                       : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                                             }`}
-                                        >
-                                             {item.icon}
-                                             <span className="text-sm font-medium">
-                                                  {item.label}
-                                             </span>
-                                        </Link>
+                                        {hasChildren ? (
+                                             <>
+                                                  <button
+                                                       onClick={() => toggleMenu(item.id)}
+                                                       className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                                                            isActive
+                                                                 ? "bg-blue-600 text-white"
+                                                                 : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                                                       }`}
+                                                  >
+                                                       <div className="flex items-center gap-3">
+                                                            {item.icon}
+                                                            <span className="text-sm font-medium">
+                                                                 {item.label}
+                                                            </span>
+                                                       </div>
+                                                       {isMenuOpen(item.id) ? (
+                                                            <ChevronDown size={16} />
+                                                       ) : (
+                                                            <ChevronRight size={16} />
+                                                       )}
+                                                  </button>
+                                                  {isMenuOpen(item.id) && item.children && (
+                                                       <ul className="ml-8 mt-1 space-y-1">
+                                                            {item.children.map((child) => {
+                                                                 const isChildActive = location.pathname === child.path;
+                                                                 return (
+                                                                      <li key={child.id}>
+                                                                           <Link
+                                                                                to={child.path}
+                                                                                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                                                                                     isChildActive
+                                                                                          ? "bg-blue-600 text-white"
+                                                                                          : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                                                                                }`}
+                                                                           >
+                                                                                {child.icon}
+                                                                                <span className="text-sm font-medium">
+                                                                                     {child.label}
+                                                                                </span>
+                                                                           </Link>
+                                                                      </li>
+                                                                 );
+                                                            })}
+                                                       </ul>
+                                                  )}
+                                             </>
+                                        ) : (
+                                             <Link
+                                                  to={item.path}
+                                                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                                                       isActive
+                                                            ? "bg-blue-600 text-white"
+                                                            : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                                                  }`}
+                                             >
+                                                  {item.icon}
+                                                  <span className="text-sm font-medium">
+                                                       {item.label}
+                                                  </span>
+                                             </Link>
+                                        )}
                                    </li>
                               );
                          })}
