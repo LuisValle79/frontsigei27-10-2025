@@ -66,14 +66,6 @@ const handleRequest = async <T,>(
   const url = `${API_CONFIG.BASE_URL}${endpoint}`;
   const method = options.method || 'GET';
 
-  // Mock data desactivado - usar siempre APIs reales
-  // if (API_CONFIG.DEVELOPMENT.USE_MOCK_DATA && mockData !== undefined) {
-  //   if (API_CONFIG.DEVELOPMENT.LOG_REQUESTS) {
-  //     console.log(`🔧 Using mock data for ${url}:`, mockData);
-  //   }
-  //   return Promise.resolve(mockData);
-  // }
-
   let lastError: Error | null = null;
 
   for (let attempt = 1; attempt <= retries; attempt++) {

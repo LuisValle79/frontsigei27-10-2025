@@ -243,11 +243,7 @@ export function EnrollmentPage() {
     return { completed, total, percentage };
   }, []);
 
-  // Manejar acciones del formulario - Memoizadas para optimización
-  const handleCreateEnrollment = useCallback(() => {
-    setEditingEnrollment(null);
-    setShowEnrollmentForm(true);
-  }, []);
+
 
   const handleEditEnrollment = useCallback((enrollment: Enrollment) => {
     setEditingEnrollment(enrollment);
@@ -714,20 +710,28 @@ export function EnrollmentPage() {
                   Actualizar
                 </button>
 
+                {/* Botón de exportar todas las matrículas a PDF */}
+                {filteredEnrollments.length > 0 && (
+                  <button
+                    onClick={() => {
+                      import('../service/SimplePdfExport.service').then(({ default: SimplePdfExportService }) => {
+                        SimplePdfExportService.generateMultipleEnrollmentsPdf(filteredEnrollments);
+                      });
+                    }}
+                    className="flex items-center px-4 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium transition-colors"
+                    title={`Exportar ${filteredEnrollments.length} matrículas a PDF`}
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Exportar PDFs ({filteredEnrollments.length})
+                  </button>
+                )}
+
                 <button
                   onClick={() => setShowIntegratedEnrollmentForm(true)}
                   className="flex items-center px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors"
                 >
-                  <GraduationCap className="h-4 w-4 mr-2" />
-                  Nueva Matrícula Integrada
-                </button>
-
-                <button
-                  onClick={handleCreateEnrollment}
-                  className="flex items-center px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
-                >
                   <Plus className="h-4 w-4 mr-2" />
-                  Nueva Matrícula (Clásica)
+                  Nueva Matrícula
                 </button>
               </div>
             </div>

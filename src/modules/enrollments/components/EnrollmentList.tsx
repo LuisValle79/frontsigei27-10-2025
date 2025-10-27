@@ -6,6 +6,7 @@
 import { useNavigate } from 'react-router-dom'
 import { Eye, Edit, Trash2, User, GraduationCap, FileText } from 'lucide-react'
 import type { Enrollment } from '../models/enrollments.model'
+import PdfExportButton from './PdfExportButton'
 
 interface EnrollmentListProps {
   readonly items: Enrollment[]
@@ -245,6 +246,14 @@ export function EnrollmentList({ items, onDelete, onView, onEdit }: EnrollmentLi
                       >
                         <Edit className="h-4 w-4" />
                       </button>
+                      
+                      {/* Botón de exportar PDF individual */}
+                      <PdfExportButton
+                        enrollment={enrollment}
+                        variant="single"
+                        className=""
+                      />
+                      
                       {enrollment.id && (
                         <button
                           onClick={() => handleDelete(enrollment.id!)}
