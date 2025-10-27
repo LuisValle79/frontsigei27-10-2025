@@ -619,6 +619,23 @@ export function EnrollmentPage() {
         </nav>
       </div>
 
+      {/* Mensaje informativo sobre integración de microservicios */}
+      {import.meta.env.DEV && activeTab === "enrollments" && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start">
+          <div className="bg-blue-100 rounded-full p-1 mr-3 mt-0.5">
+            <FileText className="h-4 w-4 text-blue-600" />
+          </div>
+          <div>
+            <h3 className="text-sm font-medium text-blue-800">Integración con Microservicios</h3>
+            <p className="text-sm text-blue-700 mt-1">
+              Los nombres de estudiantes se obtienen del microservicio de estudiantes en tiempo real.
+              Los porcentajes de documentos son datos de prueba simulados hasta que el backend esté configurado.
+              Revisa la consola del navegador para ver los logs de integración.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Contenido de las pestañas */}
       {activeTab === "enrollments" && (
         <>

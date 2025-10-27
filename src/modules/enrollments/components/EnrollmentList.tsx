@@ -4,8 +4,11 @@
  */
 
 import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import { Eye, Edit, Trash2, User, GraduationCap, FileText } from 'lucide-react'
 import type { Enrollment } from '../models/enrollments.model'
+import type { StudentResponse } from '../models/integration.model'
+import { studentIntegrationService } from '../service/Integration.service'
 import PdfExportButton from './PdfExportButton'
 
 interface EnrollmentListProps {
@@ -17,6 +20,132 @@ interface EnrollmentListProps {
 
 export function EnrollmentList({ items, onDelete, onView, onEdit }: EnrollmentListProps) {
   const navigate = useNavigate()
+  
+  // Estado para almacenar los datos de estudiantes
+  const [studentsData, setStudentsData] = useState<Record<string, StudentResponse>>({})
+  const [loadingStudents, setLoadingStudents] = useState<Set<string>>(new Set())
+  const [studentErrors, setStudentErrors] = useState<Record<string, string>>({})
+
+  // Cargar datos de estudiantes cuando cambian los items
+  useEffect(() => {
+    const loadStudentData = async () => {
+      const studentIds = items.map(enrollment => enrollment.studentId)
+      const uniqueStudentIds = [...new Set(studentIds)]
+      
+      // Filtrar estudiantes que ya no están cargados o están cargándose
+      const studentsToLoad = uniqueStudentIds.filter(
+        studentId => !studentsData[studentId] && !loadingStudents.has(studentId)
+      )
+
+      if (studentsToLoad.length === 0) return
+
+      // Marcar estudiantes como cargándose
+      setLoadingStudents(prev => new Set([...prev, ...studentsToLoad]))
+
+      // Cargar datos de estudiantes en paralelo
+      const studentPromises = studentsToLoad.map(async (studentId) => {
+        try {
+          if (import.meta.env.DEV) {
+            console.log(`🔍 Cargando datos del estudiante: ${studentId}`)
+          }
+          const studentResponse = await studentIntegrationService.getStudentById(studentId)
+          if (import.meta.env.DEV) {
+            console.log(`✅ Datos del estudiante ${studentId} cargados:`, studentResponse)
+          }
+          return { studentId, data: studentResponse, error: null }
+        } catch (error) {
+          console.error(`❌ Error cargando estudiante ${studentId}:`, error)
+          return { studentId, data: null, error: error instanceof Error ? error.message : 'Error desconocido' }
+        }
+      })
+
+      const results = await Promise.allSettled(studentPromises)
+      
+      // Actualizar estado con los resultados
+      const newStudentsData: Record<string, StudentResponse> = {}
+      const newStudentErrors: Record<string, string> = {}
+      
+      results.forEach((result) => {
+        if (result.status === 'fulfilled') {
+          const { studentId, data, error } = result.value
+          if (data) {
+            newStudentsData[studentId] = data
+          } else if (error) {
+            newStudentErrors[studentId] = error
+          }
+        }
+      })
+
+      setStudentsData(prev => ({ ...prev, ...newStudentsData }))
+      setStudentErrors(prev => ({ ...prev, ...newStudentErrors }))
+      setLoadingStudents(prev => {
+        const newSet = new Set(prev)
+        studentsToLoad.forEach(id => newSet.delete(id))
+        return newSet
+      })
+    }
+
+    loadStudentData()
+  }, [items, studentsData, loadingStudents])
+
+  // Función para obtener el nombre del estudiante
+  const getStudentDisplayName = (studentId: string): string => {
+    const studentData = studentsData[studentId]
+    const error = studentErrors[studentId]
+    
+    if (loadingStudents.has(studentId)) {
+      return 'Cargando...'
+    }
+    
+    if (error) {
+      return `Error: ${studentId.slice(0, 8)}...`
+    }
+    
+    if (studentData?.success && studentData.data) {
+      const { names, lastNames } = studentData.data.personalInfo
+      return `${names} ${lastNames}`.trim()
+    }
+    
+    // Fallback al ID si no se puede cargar el nombre
+    return `ID: ${studentId.slice(0, 8)}...`
+  }
+
+  // Función para obtener el estado visual del estudiante
+  const getStudentDisplayState = (studentId: string) => {
+    const error = studentErrors[studentId]
+    const isLoading = loadingStudents.has(studentId)
+    const hasData = studentsData[studentId]?.success
+
+    if (isLoading) {
+      return { 
+        iconClass: 'bg-gray-100 animate-pulse', 
+        userClass: 'text-gray-400',
+        tooltip: 'Cargando datos del estudiante...'
+      }
+    }
+    
+    if (error) {
+      return { 
+        iconClass: 'bg-red-100', 
+        userClass: 'text-red-600',
+        tooltip: `Error al cargar estudiante: ${error}`
+      }
+    }
+    
+    if (hasData) {
+      return { 
+        iconClass: 'bg-green-100', 
+        userClass: 'text-green-600',
+        tooltip: 'Datos del estudiante cargados correctamente'
+      }
+    }
+    
+    return { 
+      iconClass: 'bg-blue-100', 
+      userClass: 'text-blue-600',
+      tooltip: 'Datos del estudiante no disponibles'
+    }
+  }
 
   const handleView = (enrollment: Enrollment) => {
     if (onView) {
@@ -98,6 +227,15 @@ export function EnrollmentList({ items, onDelete, onView, onEdit }: EnrollmentLi
       enrollment.dniVerification
     ];
     
+    // Debug: Log para ver qué documentos están llegando (solo en desarrollo)
+    if (import.meta.env.DEV) {
+      console.log(`📋 Documentos para matrícula ${enrollment.id}:`, {
+        completed: documents.filter(Boolean).length,
+        total: documents.length,
+        percentage: Math.round((documents.filter(Boolean).length / documents.length) * 100)
+      });
+    }
+    
     const completed = documents.filter(Boolean).length;
     const total = documents.length;
     const percentage = Math.round((completed / total) * 100);
@@ -159,21 +297,32 @@ export function EnrollmentList({ items, onDelete, onView, onEdit }: EnrollmentLi
                 <tr key={enrollment.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="bg-blue-100 rounded-full p-2 mr-3">
-                        <User className="h-4 w-4 text-blue-600" />
-                      </div>
+                      {(() => {
+                        const displayState = getStudentDisplayState(enrollment.studentId)
+                        return (
+                          <div 
+                            className={`rounded-full p-2 mr-3 ${displayState.iconClass}`}
+                            title={displayState.tooltip}
+                          >
+                            <User className={`h-4 w-4 ${displayState.userClass}`} />
+                          </div>
+                        )
+                      })()}
                       <div>
                         <div className="text-sm font-medium text-gray-900">
-                          {enrollment.studentId}
+                          {getStudentDisplayName(enrollment.studentId)}
                         </div>
                         <div className="text-sm text-gray-500">
                           {getAgeGroupText(enrollment.ageGroup)} - {enrollment.section}
                         </div>
-                        {enrollment.enrollmentCode && (
-                          <div className="text-xs text-gray-400">
-                            {enrollment.enrollmentCode}
-                          </div>
-                        )}
+                        <div className="text-xs text-gray-400">
+                          {enrollment.enrollmentCode ? enrollment.enrollmentCode : `ID: ${enrollment.studentId.slice(0, 8)}...`}
+                          {studentsData[enrollment.studentId]?.success && studentsData[enrollment.studentId].data && (
+                            <span className="ml-2 text-green-600">
+                              • CUI: {studentsData[enrollment.studentId].data.cui}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </td>
@@ -209,9 +358,20 @@ export function EnrollmentList({ items, onDelete, onView, onEdit }: EnrollmentLi
                           <span className="text-xs font-medium text-gray-700">
                             {docProgress.completed}/{docProgress.total}
                           </span>
-                          <span className="text-xs text-gray-500">
-                            {docProgress.percentage}%
-                          </span>
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs text-gray-500">
+                              {docProgress.percentage}%
+                            </span>
+                            {/* Indicador de datos de prueba */}
+                            {import.meta.env.DEV && docProgress.completed > 0 && (
+                              <span 
+                                className="text-xs bg-blue-100 text-blue-600 px-1 rounded" 
+                                title="Datos de prueba - El backend aún no maneja documentos"
+                              >
+                                TEST
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
                           <div 

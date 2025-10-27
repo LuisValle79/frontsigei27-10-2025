@@ -347,7 +347,7 @@ export class SimplePdfExportService {
     });
 
     // Información izquierda
-    doc.text(`Documento generado el ${currentDate} a las ${currentTime}`, 20, footerY);
+    doc.text(`${currentDate} a las ${currentTime}`, 20, footerY);
     
     // Información derecha
     doc.text('Sistema de Gestión Educativa', pageWidth - 20, footerY, { align: 'right' });

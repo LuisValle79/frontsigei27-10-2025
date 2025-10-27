@@ -130,6 +130,109 @@ const handleRequest = async <T,>(
       const data = await response.json();
       if (API_CONFIG.DEVELOPMENT.LOG_RESPONSES) {
         console.log(`✅ API Success: ${response.status} ${url}`, data);
+        
+        // Debug específico para matrículas: verificar campos de documentos
+        if (endpoint.includes('/enrollments') && Array.isArray(data)) {
+          console.log('📋 Verificando campos de documentos en matrículas:', 
+            data.map(enrollment => ({
+              id: enrollment.id,
+              studentId: enrollment.studentId,
+              documents: {
+                birthCertificate: enrollment.birthCertificate,
+                studentDni: enrollment.studentDni,
+                guardianDni: enrollment.guardianDni,
+                vaccinationCard: enrollment.vaccinationCard,
+                disabilityCertificate: enrollment.disabilityCertificate,
+                utilityBill: enrollment.utilityBill,
+                psychologicalReport: enrollment.psychologicalReport,
+                studentPhoto: enrollment.studentPhoto,
+                healthRecord: enrollment.healthRecord,
+                signedEnrollmentForm: enrollment.signedEnrollmentForm,
+                dniVerification: enrollment.dniVerification
+              }
+            }))
+          );
+          
+          // TEMPORAL: Agregar datos de documentos de prueba (hasta que el backend funcione correctamente)
+          data.forEach((enrollment, index) => {
+            // Verificar si TODOS los campos de documentos están en false/null/undefined (indicando que el backend no los maneja)
+            const hasDocumentData = [
+              enrollment.birthCertificate,
+              enrollment.studentDni,
+              enrollment.guardianDni,
+              enrollment.vaccinationCard,
+              enrollment.disabilityCertificate,
+              enrollment.utilityBill,
+              enrollment.psychologicalReport,
+              enrollment.studentPhoto,
+              enrollment.healthRecord,
+              enrollment.signedEnrollmentForm,
+              enrollment.dniVerification
+            ].some(doc => doc === true);
+            
+            // Si no hay ningún documento marcado como true, aplicar datos de prueba
+            if (!hasDocumentData) {
+              // Simular diferentes niveles de progreso para testing
+              const progressLevel = index % 4;
+              
+              if (progressLevel === 0) {
+                // 100% completado
+                enrollment.birthCertificate = true;
+                enrollment.studentDni = true;
+                enrollment.guardianDni = true;
+                enrollment.vaccinationCard = true;
+                enrollment.disabilityCertificate = true;
+                enrollment.utilityBill = true;
+                enrollment.psychologicalReport = true;
+                enrollment.studentPhoto = true;
+                enrollment.healthRecord = true;
+                enrollment.signedEnrollmentForm = true;
+                enrollment.dniVerification = true;
+              } else if (progressLevel === 1) {
+                // 70% completado
+                enrollment.birthCertificate = true;
+                enrollment.studentDni = true;
+                enrollment.guardianDni = true;
+                enrollment.vaccinationCard = true;
+                enrollment.disabilityCertificate = false;
+                enrollment.utilityBill = true;
+                enrollment.psychologicalReport = true;
+                enrollment.studentPhoto = true;
+                enrollment.healthRecord = false;
+                enrollment.signedEnrollmentForm = true;
+                enrollment.dniVerification = false;
+              } else if (progressLevel === 2) {
+                // 45% completado
+                enrollment.birthCertificate = true;
+                enrollment.studentDni = true;
+                enrollment.guardianDni = false;
+                enrollment.vaccinationCard = true;
+                enrollment.disabilityCertificate = false;
+                enrollment.utilityBill = true;
+                enrollment.psychologicalReport = false;
+                enrollment.studentPhoto = true;
+                enrollment.healthRecord = false;
+                enrollment.signedEnrollmentForm = false;
+                enrollment.dniVerification = false;
+              } else {
+                // 18% completado
+                enrollment.birthCertificate = true;
+                enrollment.studentDni = true;
+                enrollment.guardianDni = false;
+                enrollment.vaccinationCard = false;
+                enrollment.disabilityCertificate = false;
+                enrollment.utilityBill = false;
+                enrollment.psychologicalReport = false;
+                enrollment.studentPhoto = false;
+                enrollment.healthRecord = false;
+                enrollment.signedEnrollmentForm = false;
+                enrollment.dniVerification = false;
+              }
+              
+              console.log(`🔧 Agregando datos de documentos de prueba para matrícula ${enrollment.id} (${progressLevel === 0 ? '100%' : progressLevel === 1 ? '70%' : progressLevel === 2 ? '45%' : '18%'})`);
+            }
+          });
+        }
       }
       return data;
 

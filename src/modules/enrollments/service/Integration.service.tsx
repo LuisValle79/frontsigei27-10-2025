@@ -21,6 +21,7 @@ logConfigurationInfo();
 
 
 
+
 // Helper function para manejar requests con timeout
 const fetchWithTimeout = async (
   url: string,
@@ -121,6 +122,11 @@ export const studentIntegrationService = {
     }
 
     const url = `${INTEGRATION_CONFIG.STUDENT_SERVICE_URL}/api/students/${studentId}`;
+    
+    if (INTEGRATION_CONFIG.ENABLE_LOGGING) {
+      console.log(`👨‍🎓 Obteniendo datos del estudiante: ${studentId} desde ${url}`);
+    }
+
     return handleIntegrationRequest<StudentResponse>(
       url,
       { method: 'GET' },
