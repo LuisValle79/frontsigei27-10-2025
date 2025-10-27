@@ -173,6 +173,26 @@ export const IntegratedEnrollmentForm: React.FC<IntegratedEnrollmentFormProps> =
     setSubmitError(null);
 
     try {
+      // Validación previa: verificar si ya existe una matrícula para este estudiante en el período académico
+      try {
+        const existingEnrollments = await enrollmentService.getEnrollmentsByStudent(formData.studentId!);
+        const duplicateEnrollment = existingEnrollments.find(enrollment => 
+          enrollment.academicPeriodId === formData.academicPeriodId && 
+          enrollment.academicYear === formData.academicYear &&
+          (enrollment.enrollmentStatus === 'ACTIVE' || enrollment.enrollmentStatus === 'PENDING')
+        );
+
+        if (duplicateEnrollment) {
+          throw new Error(`Ya existe una matrícula ${duplicateEnrollment.enrollmentStatus === 'ACTIVE' ? 'activa' : 'pendiente'} para este estudiante en el período académico seleccionado (Código: ${duplicateEnrollment.enrollmentCode || duplicateEnrollment.id}). Por favor, seleccione un período diferente o contacte al administrador.`);
+        }
+      } catch (validationError) {
+        // Si es un error de validación (matrícula duplicada), lanzarlo
+        if (validationError instanceof Error && validationError.message.includes('Ya existe una matrícula')) {
+          throw validationError;
+        }
+        // Si es un error de red al verificar, continuar con la creación (el backend manejará la validación)
+        console.warn('No se pudo verificar matrículas existentes, continuando con la creación:', validationError);
+      }
       const enrollmentData: CreateEnrollmentDto = {
         studentId: formData.studentId!,
         institutionId: formData.institutionId!,
@@ -211,8 +231,29 @@ export const IntegratedEnrollmentForm: React.FC<IntegratedEnrollmentFormProps> =
         onEnrollmentCreated(createdEnrollment);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Error al crear la matrícula';
+      console.error('Error creating enrollment:', error);
+      
+      let errorMessage = 'Error al crear la matrícula';
+      
+      if (error instanceof Error) {
+        // Manejar errores específicos de manera más amigable
+        if (error.message.includes('Ya existe una matrícula para este estudiante')) {
+          errorMessage = `⚠️ ${error.message}\n\n💡 Sugerencias:\n• Verifique si ya existe una matrícula activa\n• Seleccione un período académico diferente\n• Contacte al administrador si necesita actualizar la matrícula existente`;
+        } else if (error.message.includes('duplicate key value violates unique constraint')) {
+          errorMessage = '⚠️ Ya existe un registro con estos datos. Por favor, verifique la información ingresada y asegúrese de que no haya duplicados.';
+        } else if (error.message.includes('Validación fallida')) {
+          errorMessage = `❌ ${error.message}\n\nPor favor, revise los campos marcados en rojo y complete la información requerida.`;
+        } else if (error.message.includes('Network')) {
+          errorMessage = '🌐 Error de conexión. Verifique su conexión a internet y vuelva a intentar.';
+        } else {
+          errorMessage = `❌ ${error.message}`;
+        }
+      }
+      
       setSubmitError(errorMessage);
+      
+      // Scroll hacia arriba para mostrar el error
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setIsSubmitting(false);
     }

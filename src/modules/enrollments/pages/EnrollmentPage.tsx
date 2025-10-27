@@ -1,6 +1,7 @@
 /**
  * Página: EnrollmentPage
  * Página principal del módulo de Matrículas - Gestión completa de matrículas y períodos académicos
+ * Consolidada con funcionalidad de IntegratedEnrollmentPage
  */
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -1265,21 +1266,65 @@ export function EnrollmentPage() {
         size="4xl"
       >
         <IntegratedEnrollmentForm
-          onEnrollmentCreated={(enrollment) => {
+          onEnrollmentCreated={async (enrollment) => {
             // Agregar la nueva matrícula a la lista
             setEnrollments(prev => [enrollment, ...prev]);
             
             // Cerrar el modal
             setShowIntegratedEnrollmentForm(false);
             
-            // Mostrar notificación de éxito
-            setNotification({
-              type: 'success',
-              message: `Matrícula creada exitosamente. Código: ${enrollment.enrollmentCode || enrollment.id}`
+            // Calcular progreso de documentos
+            const progress = calculateDocumentProgress(enrollment);
+            
+            // Mostrar modal de éxito con SweetAlert2 incluyendo progreso de documentos
+            await Swal.fire({
+              title: '¡Matrícula Creada Exitosamente!',
+              html: `
+                <div style="text-align: left; margin: 1rem 0;">
+                  <div style="background: #f8f9fa; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                      <strong>Código de Matrícula:</strong>
+                      <span>${enrollment.enrollmentCode || enrollment.id}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                      <strong>Año Académico:</strong>
+                      <span>${enrollment.academicYear}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                      <strong>Estado:</strong>
+                      <span style="background: #E8F5E8; color: #2E7D32; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">
+                        ${getStatusText(enrollment.enrollmentStatus || 'PENDING')}
+                      </span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                      <strong>Fecha de Matrícula:</strong>
+                      <span>${enrollment.enrollmentDate ? new Date(enrollment.enrollmentDate).toLocaleDateString('es-PE') : 'Hoy'}</span>
+                    </div>
+                    <div style="border-top: 1px solid #e0e0e0; padding-top: 1rem;">
+                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <strong>Progreso de Documentos:</strong>
+                        <span style="font-size: 0.9rem; color: #666;">${progress.completed}/${progress.total} (${progress.percentage}%)</span>
+                      </div>
+                      <div style="background: #e0e0e0; height: 8px; border-radius: 4px; overflow: hidden;">
+                        <div style="background: linear-gradient(90deg, #4CAF50, #66BB6A); height: 100%; width: ${progress.percentage}%; border-radius: 4px; transition: width 0.3s ease;"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <p style="text-align: center; color: #666; margin: 0;">
+                    La matrícula ha sido registrada correctamente en el sistema.<br>
+                    Puede proceder con la documentación requerida y el proceso de inscripción.
+                  </p>
+                </div>
+              `,
+              icon: 'success',
+              confirmButtonText: 'Entendido',
+              confirmButtonColor: '#059669',
+              width: '500px',
+              showCloseButton: true
             });
             
-            // Limpiar notificación después de 5 segundos
-            setTimeout(() => setNotification(null), 5000);
+            // Mostrar notificación adicional
+            showNotification('success', `Matrícula creada exitosamente. Progreso de documentos: ${progress.percentage}%`);
           }}
           onCancel={() => setShowIntegratedEnrollmentForm(false)}
         />

@@ -60,7 +60,6 @@ const fetchWithTimeout = async (
 const handleRequest = async <T,>(
   endpoint: string,
   options: RequestInit = {},
-  mockData?: T,
   retries: number = API_CONFIG.RETRIES
 ): Promise<T> => {
   const url = `${API_CONFIG.BASE_URL}${endpoint}`;
@@ -107,7 +106,14 @@ const handleRequest = async <T,>(
         } else if (response.status === 404) {
           throw new Error(errorMessage || 'Recurso no encontrado');
         } else if (response.status === 500) {
-          throw new Error(errorMessage || 'Error interno del servidor');
+          // Manejar errores específicos de constraint de base de datos
+          if (errorMessage.includes('unique constraint "uq_enrollment_student_period"')) {
+            throw new Error('Ya existe una matrícula para este estudiante en el período académico seleccionado. Por favor, verifique los datos o seleccione un período diferente.');
+          } else if (errorMessage.includes('duplicate key value violates unique constraint')) {
+            throw new Error('Ya existe un registro con estos datos. Por favor, verifique la información ingresada.');
+          } else {
+            throw new Error(errorMessage || 'Error interno del servidor');
+          }
         } else {
           throw new Error(errorMessage);
         }
@@ -246,8 +252,7 @@ export const enrollmentService = {
 
     return handleRequest<void>(
       API_CONFIG.ENDPOINTS.DELETE(id),
-      { method: 'DELETE' },
-      undefined
+      { method: 'DELETE' }
     );
   },
 
