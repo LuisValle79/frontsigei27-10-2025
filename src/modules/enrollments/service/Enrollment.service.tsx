@@ -5,15 +5,14 @@
 
 import type { Enrollment, CreateEnrollmentDto, UpdateEnrollmentDto } from '../models/enrollments.model';
 
+import { INTEGRATION_CONFIG } from '../config/integration.config';
+
 // 🌐 Configuración de API - Basada en documentación backend
 const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:9082/api/v1',
-  TIMEOUT: 15000,
-  RETRIES: 3,
-  DEFAULT_HEADERS: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  },
+  BASE_URL: INTEGRATION_CONFIG.ENROLLMENT_SERVICE_URL,
+  TIMEOUT: INTEGRATION_CONFIG.DEFAULT_TIMEOUT,
+  RETRIES: INTEGRATION_CONFIG.MAX_RETRIES,
+  DEFAULT_HEADERS: INTEGRATION_CONFIG.DEFAULT_HEADERS,
   ENDPOINTS: {
     GET_ALL: '/enrollments',
     GET_BY_ID: (id: string) => `/enrollments/${id}`,
@@ -25,175 +24,13 @@ const API_CONFIG = {
     BY_STUDENT: (studentId: string) => `/enrollments/student/${studentId}`,
   },
   DEVELOPMENT: {
-    USE_MOCK_DATA: import.meta.env.VITE_USE_MOCK_DATA === 'true' || false,
-    LOG_REQUESTS: import.meta.env.DEV || false,
-    LOG_RESPONSES: import.meta.env.DEV || false,
+    USE_MOCK_DATA: INTEGRATION_CONFIG.USE_MOCK_DATA,
+    LOG_REQUESTS: INTEGRATION_CONFIG.ENABLE_LOGGING,
+    LOG_RESPONSES: INTEGRATION_CONFIG.ENABLE_LOGGING,
   }
 };
 
-// 📋 Mock data para desarrollo cuando el backend no está disponible
-const mockEnrollments: Enrollment[] = [
-  {
-    id: 'enr_a1b2c3d4',
-    studentId: 'std_001',
-    institutionId: 'inst_001',
-    classroomId: 'cls_001',
-    academicYear: '2025',
-    academicPeriodId: 'period_2025_1',
-    enrollmentDate: '2024-10-15T10:30:00',
-    enrollmentStatus: 'ACTIVE',
-    enrollmentType: 'NUEVA',
-    previousInstitution: '',
-    observations: 'Primera matrícula del estudiante - Documentos completos',
-    ageGroup: '3_AÑOS',
-    shift: 'MAÑANA',
-    section: 'A',
-    modality: 'PRESENCIAL',
-    educationalLevel: 'INITIAL',
-    studentAge: 3,
-    enrollmentCode: 'MAT2025001',
-    birthCertificate: true,
-    studentDni: true,
-    guardianDni: true,
-    vaccinationCard: true,
-    disabilityCertificate: false,
-    utilityBill: true,
-    psychologicalReport: false,
-    studentPhoto: true,
-    healthRecord: true,
-    signedEnrollmentForm: true,
-    dniVerification: true,
-    deleted: false,
-  },
-  {
-    id: 'enr_b2c3d4e5',
-    studentId: 'std_002',
-    institutionId: 'inst_001',
-    classroomId: 'cls_002',
-    academicYear: '2025',
-    academicPeriodId: 'period_2025_1',
-    enrollmentDate: '2024-10-16T14:20:00.000Z',
-    enrollmentStatus: 'ACTIVE',
-    enrollmentType: 'REINSCRIPCION',
-    ageGroup: '4_AÑOS',
-    shift: 'TARDE',
-    section: 'B',
-    modality: 'PRESENCIAL',
-    educationalLevel: 'INITIAL',
-    studentAge: 4,
-    enrollmentCode: 'MAT2025002',
-    birthCertificate: true,
-    studentDni: true,
-    guardianDni: true,
-    vaccinationCard: true,
-    disabilityCertificate: false,
-    utilityBill: true,
-    psychologicalReport: true,
-    studentPhoto: true,
-    healthRecord: true,
-    signedEnrollmentForm: true,
-    dniVerification: true,
-    observations: 'Reinscripción - Documentos completos',
-    previousInstitution: 'inst_002',
-    deleted: false,
-  },
-  {
-    id: 'enr_c3d4e5f6',
-    studentId: 'std_003',
-    institutionId: 'inst_001',
-    classroomId: 'cls_003',
-    academicYear: '2025',
-    academicPeriodId: 'period_2025_1',
-    enrollmentDate: '2024-10-17T09:15:00.000Z',
-    enrollmentStatus: 'PENDING',
-    enrollmentType: 'NUEVA',
-    ageGroup: '5_AÑOS',
-    shift: 'MAÑANA',
-    section: 'C',
-    modality: 'PRESENCIAL',
-    educationalLevel: 'INITIAL',
-    studentAge: 5,
-    enrollmentCode: 'MAT2025003',
-    birthCertificate: true,
-    studentDni: false,
-    guardianDni: false,
-    vaccinationCard: false,
-    disabilityCertificate: false,
-    utilityBill: false,
-    psychologicalReport: false,
-    studentPhoto: false,
-    healthRecord: false,
-    signedEnrollmentForm: false,
-    dniVerification: false,
-    observations: 'Pendiente de documentos - Falta completar requisitos',
-    previousInstitution: '',
-    deleted: false,
-  },
-  {
-    id: 'enr_d4e5f6g7',
-    studentId: 'std_004',
-    institutionId: 'inst_001',
-    classroomId: 'cls_001',
-    academicYear: '2025',
-    academicPeriodId: 'period_2025_1',
-    enrollmentDate: '2024-10-18T11:45:00.000Z',
-    enrollmentStatus: 'ACTIVE',
-    enrollmentType: 'NUEVA',
-    ageGroup: '3_AÑOS',
-    shift: 'TARDE',
-    section: 'A',
-    modality: 'HIBRIDA',
-    educationalLevel: 'INITIAL',
-    studentAge: 3,
-    enrollmentCode: 'MAT2025004',
-    birthCertificate: true,
-    studentDni: true,
-    guardianDni: true,
-    vaccinationCard: true,
-    disabilityCertificate: true,
-    utilityBill: true,
-    psychologicalReport: true,
-    studentPhoto: true,
-    healthRecord: true,
-    signedEnrollmentForm: true,
-    dniVerification: true,
-    observations: 'Matrícula híbrida - Necesidades especiales',
-    previousInstitution: '',
-    deleted: false,
-  },
-  {
-    id: 'enr_e5f6g7h8',
-    studentId: 'std_005',
-    institutionId: 'inst_002',
-    classroomId: 'cls_004',
-    academicYear: '2025',
-    academicPeriodId: 'period_2025_2',
-    enrollmentDate: '2024-10-19T08:30:00.000Z',
-    enrollmentStatus: 'CANCELLED',
-    enrollmentType: 'NUEVA',
-    ageGroup: '4_AÑOS',
-    shift: 'MAÑANA',
-    section: 'D',
-    modality: 'VIRTUAL',
-    educationalLevel: 'INITIAL',
-    studentAge: 4,
-    enrollmentCode: 'MAT2025005',
-    birthCertificate: true,
-    studentDni: true,
-    guardianDni: false,
-    vaccinationCard: true,
-    disabilityCertificate: false,
-    utilityBill: false,
-    psychologicalReport: false,
-    studentPhoto: false,
-    healthRecord: false,
-    signedEnrollmentForm: false,
-    dniVerification: false,
-    observations: 'Matrícula cancelada por solicitud de los padres',
-    previousInstitution: '',
-    deleted: false,
-  },
-];
+
 
 
 
@@ -229,13 +66,13 @@ const handleRequest = async <T,>(
   const url = `${API_CONFIG.BASE_URL}${endpoint}`;
   const method = options.method || 'GET';
 
-  // Si está en modo mock, devolver mock data directamente
-  if (API_CONFIG.DEVELOPMENT.USE_MOCK_DATA && mockData !== undefined) {
-    if (API_CONFIG.DEVELOPMENT.LOG_REQUESTS) {
-      console.log(`🔧 Using mock data for ${url}:`, mockData);
-    }
-    return Promise.resolve(mockData);
-  }
+  // Mock data desactivado - usar siempre APIs reales
+  // if (API_CONFIG.DEVELOPMENT.USE_MOCK_DATA && mockData !== undefined) {
+  //   if (API_CONFIG.DEVELOPMENT.LOG_REQUESTS) {
+  //     console.log(`🔧 Using mock data for ${url}:`, mockData);
+  //   }
+  //   return Promise.resolve(mockData);
+  // }
 
   let lastError: Error | null = null;
 
@@ -302,11 +139,11 @@ const handleRequest = async <T,>(
       lastError = error instanceof Error ? error : new Error('Unknown error');
       console.error(`❌ API Failed for ${url} (Attempt ${attempt}):`, lastError);
 
-      // En el último intento, usar mock data si está disponible
-      if (attempt === retries && mockData !== undefined && !API_CONFIG.DEVELOPMENT.USE_MOCK_DATA) {
-        console.warn(`🔄 Falling back to mock data for ${url}:`, mockData);
-        return mockData;
-      }
+      // No usar mock data - solo APIs reales
+      // if (attempt === retries && mockData !== undefined && !API_CONFIG.DEVELOPMENT.USE_MOCK_DATA) {
+      //   console.warn(`🔄 Falling back to mock data for ${url}:`, mockData);
+      //   return mockData;
+      // }
     }
   }
 
@@ -322,8 +159,7 @@ export const enrollmentService = {
   getAllEnrollments: async (): Promise<Enrollment[]> => {
     return handleRequest<Enrollment[]>(
       API_CONFIG.ENDPOINTS.GET_ALL,
-      { method: 'GET' },
-      mockEnrollments
+      { method: 'GET' }
     );
   },
 
@@ -336,11 +172,9 @@ export const enrollmentService = {
       throw new Error('ID de matrícula es requerido');
     }
 
-    const mockData = mockEnrollments.find((e) => e.id === id) || mockEnrollments[0];
     return handleRequest<Enrollment>(
       API_CONFIG.ENDPOINTS.GET_BY_ID(id),
-      { method: 'GET' },
-      mockData
+      { method: 'GET' }
     );
   },
 
@@ -349,6 +183,15 @@ export const enrollmentService = {
    * Crear nueva matrícula
    */
   createEnrollment: async (enrollment: CreateEnrollmentDto): Promise<Enrollment> => {
+    // Log para debug
+    if (API_CONFIG.DEVELOPMENT.LOG_REQUESTS) {
+      console.log('🎯 Creating enrollment with config:', {
+        useMockData: API_CONFIG.DEVELOPMENT.USE_MOCK_DATA,
+        baseUrl: API_CONFIG.BASE_URL,
+        enrollment
+      });
+    }
+
     // Validar datos antes de enviar
     const { isValid, errors } = enrollmentUtils.validateEnrollmentData(enrollment);
     if (!isValid) {
@@ -359,20 +202,14 @@ export const enrollmentService = {
       );
     }
 
-    const mockData = { 
-      ...enrollment, 
-      id: `enr_${Date.now()}`, 
-      enrollmentDate: new Date().toISOString(),
-      deleted: false 
-    } as Enrollment;
+
 
     return handleRequest<Enrollment>(
       API_CONFIG.ENDPOINTS.CREATE,
       {
         method: 'POST',
         body: JSON.stringify(enrollment),
-      },
-      mockData
+      }
     );
   },
 
@@ -395,19 +232,14 @@ export const enrollmentService = {
       );
     }
 
-    const mockData = { 
-      ...mockEnrollments.find((e) => e.id === id), 
-      ...enrollment, 
-      id 
-    } as Enrollment;
+
 
     return handleRequest<Enrollment>(
       API_CONFIG.ENDPOINTS.UPDATE(id),
       {
         method: 'PUT',
         body: JSON.stringify(enrollment),
-      },
-      mockData
+      }
     );
   },
 
@@ -436,15 +268,9 @@ export const enrollmentService = {
       throw new Error('ID de matrícula es requerido para restaurar');
     }
 
-    const mockData = { 
-      ...mockEnrollments.find((e) => e.id === id), 
-      deleted: false 
-    } as Enrollment;
-
     return handleRequest<Enrollment>(
       API_CONFIG.ENDPOINTS.RESTORE(id),
-      { method: 'PATCH' },
-      mockData
+      { method: 'PATCH' }
     );
   },
 
@@ -457,11 +283,9 @@ export const enrollmentService = {
       throw new Error('ID de institución es requerido');
     }
 
-    const mockData = mockEnrollments.filter((e) => e.institutionId === institutionId);
     return handleRequest<Enrollment[]>(
       API_CONFIG.ENDPOINTS.BY_INSTITUTION(institutionId),
-      { method: 'GET' },
-      mockData
+      { method: 'GET' }
     );
   },
 
@@ -474,11 +298,9 @@ export const enrollmentService = {
       throw new Error('ID de estudiante es requerido');
     }
 
-    const mockData = mockEnrollments.filter((e) => e.studentId === studentId);
     return handleRequest<Enrollment[]>(
       API_CONFIG.ENDPOINTS.BY_STUDENT(studentId),
-      { method: 'GET' },
-      mockData
+      { method: 'GET' }
     );
   },
 };

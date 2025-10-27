@@ -6,12 +6,18 @@
 import { Route } from 'react-router-dom'
 import { EnrollmentPage } from '../pages/EnrollmentPage'
 import { EnrollmentEditPage } from '../pages/EnrollmentEditPage'
+import { EnrollmentCreatePage } from '../pages/EnrollmentCreatePage'
+import { EnrollmentDetailPage } from '../pages/EnrollmentDetailPage'
+
 import { AcademicPeriodPage } from '../pages/AcademicPeriodPage'
 
 export const enrollmentsRoutes = (
   <>
     {/* Rutas de Matrículas */}
     <Route path="matriculas" element={<EnrollmentPage />} />
+    <Route path="matriculas/nueva" element={<EnrollmentCreatePage />} />
+
+    <Route path="matriculas/:id" element={<EnrollmentDetailPage />} />
     <Route path="matriculas/:id/editar" element={<EnrollmentEditPage />} />
     
     {/* Rutas de Períodos Académicos */}

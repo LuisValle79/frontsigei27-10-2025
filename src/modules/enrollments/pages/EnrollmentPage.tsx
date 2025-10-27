@@ -38,6 +38,8 @@ import type { Enrollment, AcademicPeriod } from "../models/enrollments.model";
 import { EnrollmentForm } from "../components/EnrollmentForm";
 import { AcademicPeriodForm } from "../components/AcademicPeriodForm";
 import { EnrollmentList } from "../components/EnrollmentList";
+import { IntegratedEnrollmentForm } from "../components/IntegratedEnrollmentForm";
+
 import { Modal } from "../components/Modal";
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
@@ -66,6 +68,9 @@ export function EnrollmentPage() {
   // Estados del modal de detalles
   const [showEnrollmentDetail, setShowEnrollmentDetail] = useState(false);
   const [detailEnrollment, setDetailEnrollment] = useState<Enrollment | null>(null);
+  
+  // Estado del modal de matrícula integrada
+  const [showIntegratedEnrollmentForm, setShowIntegratedEnrollmentForm] = useState(false);
   
   // Estados de búsqueda y filtros
   const [searchTerm, setSearchTerm] = useState("");
@@ -464,6 +469,8 @@ export function EnrollmentPage() {
     setShowEnrollmentDetail(true);
   }, []);
 
+
+
   // Filtrar matrículas localmente - Memoizado para optimización
   const filteredEnrollments = useMemo(() => {
     return enrollments.filter(enrollment => {
@@ -708,11 +715,19 @@ export function EnrollmentPage() {
                 </button>
 
                 <button
+                  onClick={() => setShowIntegratedEnrollmentForm(true)}
+                  className="flex items-center px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors"
+                >
+                  <GraduationCap className="h-4 w-4 mr-2" />
+                  Nueva Matrícula Integrada
+                </button>
+
+                <button
                   onClick={handleCreateEnrollment}
                   className="flex items-center px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Nueva Matrícula
+                  Nueva Matrícula (Clásica)
                 </button>
               </div>
             </div>
@@ -1237,6 +1252,36 @@ export function EnrollmentPage() {
               </div>
         )}
       </Modal>
+
+      {/* Modal de Nueva Matrícula Integrada */}
+      <Modal
+        isOpen={showIntegratedEnrollmentForm}
+        onClose={() => setShowIntegratedEnrollmentForm(false)}
+        title="Nueva Matrícula Integrada"
+        size="4xl"
+      >
+        <IntegratedEnrollmentForm
+          onEnrollmentCreated={(enrollment) => {
+            // Agregar la nueva matrícula a la lista
+            setEnrollments(prev => [enrollment, ...prev]);
+            
+            // Cerrar el modal
+            setShowIntegratedEnrollmentForm(false);
+            
+            // Mostrar notificación de éxito
+            setNotification({
+              type: 'success',
+              message: `Matrícula creada exitosamente. Código: ${enrollment.enrollmentCode || enrollment.id}`
+            });
+            
+            // Limpiar notificación después de 5 segundos
+            setTimeout(() => setNotification(null), 5000);
+          }}
+          onCancel={() => setShowIntegratedEnrollmentForm(false)}
+        />
+      </Modal>
+
+
     </div>
   );
 }
